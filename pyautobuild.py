@@ -1,7 +1,5 @@
-# import os
-# import subprocess
 from base import cmd
-from zsh import ZSH
+from packages.zsh import ZSH
 
 ACCEPTED_YES = ["y", "yes", "Y", "YES"]
 
@@ -29,6 +27,9 @@ apt_enhanced_pkgs = [
     "tree"
 ]
 
+def continue_after_fail():
+    ans = input('Failed to install core packages, do you want to continue? (y/n):')
+    return ans in ACCEPTED_YES
 
 
 # apt_packages_optional=["gnupg", "htop", "jq", "pass", "pwgen", "rsync", "shellcheck", "unzip"]
@@ -39,36 +40,31 @@ def apt_install(*packages):
         pkgs = " ".join(packages[0])
     else:
         pkgs = " ".join(packages)
+    print(f"Installing {pkgs}")
     exec_result = cmd(f"{base_cmd} {pkgs}")
     return exec_result
 
-def install_core_pkgs():
-    pkg_list = " ".join(apt_pkgs) 
-    opt_pkg_list = " ".join(apt_enhanced_pkgs)
-
-    try:
-        apt_install(pkg_list)
-    except Exception:
-        if input('Failed to install core packages, do you want to continue? (y/n):') not in ACCEPTED_YES:
-            print('Exiting...')
-            return
-
-    if input("do you want to install the Following packages? (y/n):" +"\n" + opt_pkg_list + "\n") in ACCEPTED_YES:
+def install_pkgs(pkgs:list[str]):
+    pkg_str = " ".join(pkgs)
+    install_optional = input("Do you want to install the Following optional packages? (y/n):" +"\n" + pkg_str + "\n")
+    if install_optional in ACCEPTED_YES or install_optional == '':
         try:
-            apt_install(opt_pkg_list)
+            apt_install(pkg_str)
         except Exception:
             print('Failed to install optional packages')
+    else:
+        print('Failed to install packages')
 
-    # init zsh and set it to default shell
-    ZSH().setup()
-
-    # install conda and python environment
 
 def customize_install():
+    # init zsh and set it to default shell
+    ZSH().install()
+    # install conda and python environment
     ...
 
 def main():
-    install_core_pkgs()
+    #install_pkgs(apt_pkgs)
+    #install_pkgs(apt_enhanced_pkgs)
     customize_install()
     # cmd("ls")
 

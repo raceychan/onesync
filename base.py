@@ -1,4 +1,5 @@
 from subprocess import run, CompletedProcess, PIPE, CalledProcessError
+
 def cmd(*args, timeout=60,shell=True, check=True,**kwargs) -> CompletedProcess | None:
     try:
         cp = run(*args, timeout=timeout, shell=shell, check=True, stdout=PIPE, stderr=PIPE, **kwargs)
