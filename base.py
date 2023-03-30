@@ -1,10 +1,13 @@
 from subprocess import run, CompletedProcess, PIPE, CalledProcessError
 
-def cmd(*args, timeout=60,shell=True, check=True,**kwargs) -> CompletedProcess | None:
+# from asyncio.subprocess import create_subprocess_exec, create_subprocess_shell, Process
+
+def cmd(*args, timeout=60, shell=True, check=True, text=True, **kwargs) -> CompletedProcess | None:
     try:
         cp = run(*args, timeout=timeout, shell=shell, check=True, stdout=PIPE, stderr=PIPE, **kwargs)
     except CalledProcessError as ce:
-        print(ce.stderr.decode(encoding='utf-8'))
+        print(ce.stderr)
+        print(f'Failed to execute {args}')
     else:
         return cp 
 
@@ -16,7 +19,7 @@ class Package:
 
     @property
     def name(self):
-        return self.__class__.__name__
+        return self.__class__.__name__.lower()
 
     @property
     def doc(self):

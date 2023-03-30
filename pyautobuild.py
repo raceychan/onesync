@@ -1,5 +1,5 @@
 from base import cmd
-from packages.zsh import ZSH
+from packages.zsh.zsh import ZSH
 
 ACCEPTED_YES = ["y", "yes", "Y", "YES"]
 
@@ -66,6 +66,7 @@ def main():
     #install_pkgs(apt_pkgs)
     #install_pkgs(apt_enhanced_pkgs)
     customize_install()
+    print('build ends')
     # cmd("ls")
 
 if __name__ == "__main__":
