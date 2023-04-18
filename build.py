@@ -1,5 +1,7 @@
-from base import cmd
+from base import cmd, ProjectRoot
 from packages.zsh.zsh import ZSH
+from packages.conda.conda import Conda
+from packages import neovim, node
 
 ACCEPTED_YES = ["y", "yes", "Y", "YES"]
 
@@ -22,6 +24,7 @@ apt_enhanced_pkgs = [
     "btop",
     "net-tools",
     "ncdu", 
+    "fd"
     "fzf", 
     "ranger", 
     "tree"
@@ -55,19 +58,33 @@ def install_pkgs(pkgs:list[str]):
     else:
         print('Failed to install packages')
 
+def install_sys_pkgs():
+    '''
+    # TODO: install all sub-packages of zsh within a same function. better abstraction needed
+
+    #dependencies.toml
+    [zsh.plugins]
+    auto-suggestion=...
+
+    for plugin in self.plugins:
+        self.install_plugins(plugin)
+    '''
+
+
 
 def customize_install():
     # init zsh and set it to default shell
-    ZSH().install()
+    # ZSH().install()
+
     # install conda and python environment
-    ...
+    # Conda().install()
+    # neovim.install()
+    node.install()
 
 def main():
-    #install_pkgs(apt_pkgs)
-    #install_pkgs(apt_enhanced_pkgs)
+    install_sys_pkgs()
     customize_install()
     print('build ends')
-    # cmd("ls")
 
 if __name__ == "__main__":
     main()

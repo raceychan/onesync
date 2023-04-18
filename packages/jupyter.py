@@ -1,4 +1,7 @@
-from base import Package
+# from base import Package
 
-class Jupyter(Package):
+# class Jupyter(Package):
+#     ...
+
+def install():
     ...

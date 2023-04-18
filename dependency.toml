@@ -1,0 +1,11 @@
+[packages.sys]
+dependency = [
+    "zsh", 
+    "curl", 
+    "ncdu", 
+    "git", 
+    "iproute2", 
+    "python3-pip",
+    "ripgrep", 
+    "tmux"
+]

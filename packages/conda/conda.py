@@ -10,7 +10,5 @@ class Conda(Package):
         https://safjan.com/top-popular-zsh-plugins-on-github-2023/
         '''
 
-        # cmd("chsh -s $(which zsh)")
-        # cmd("touch $HOME/zsh-plugins")
         ...
 

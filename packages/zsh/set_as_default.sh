@@ -1,2 +1,1 @@
-
 chsh -s $(which zsh)
