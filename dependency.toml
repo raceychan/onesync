@@ -1,4 +1,4 @@
-[packages.sys]
+[sys]
 dependency = [
     "zsh", 
     "curl", 
@@ -8,4 +8,21 @@ dependency = [
     "python3-pip",
     "ripgrep", 
     "tmux"
+]
+
+[sys.python]
+dependency = [
+    "euporie"
+]
+
+[sys.python.jupyter]
+dependency = [
+    "jupyter", 
+    "jupyterlab", 
+    "jupyterlab_code_formatter", 
+    "black" , 
+    "isort", 
+    "nb_conda_kernels", 
+    "jupyterlab-lsp", 
+    "python-lsp-server", 
 ]

@@ -18,12 +18,14 @@ function download_install_v2raya(){
 
 function autostart_v2raya(){
     # TODO: test if systemd is enabled on the system
-    # if [ ps --no-headers -o comm 1 ];
-    # then 
-
-    sudo systemctl disable v2ray --now
-    sudo systemctl start v2raya.service
-    sudo systemctl enable v2raya.service
+    if [ ps --no-headers -o comm 1 ];
+    then 
+        sudo systemctl disable v2ray --now
+        sudo systemctl start v2raya.service
+        sudo systemctl enable v2raya.service
+    else:
+        echo "systemd is not yet enabled in current system"
+    fi;
 }
 
 function setup_git(){

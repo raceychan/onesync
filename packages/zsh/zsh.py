@@ -18,7 +18,6 @@ class ZSH(Package):
     def is_installed(self) -> bool:
         return self._is_installed
 
-
     @property
     def plugins_dir(self) -> Path:
         return self.root_dir / "zsh-plugins"
