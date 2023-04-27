@@ -1,4 +1,3 @@
-
 function enable_systemd(){
     #TODO: restart wsl
     if ! [ -e /etc/wsl.conf ];
@@ -31,7 +30,7 @@ function autostart_v2raya(){
 function setup_git(){
     type -p jq >/dev/null 2>&1 || sudo apt install -y jq # install jq only if its not installed    
 
-    port=$(jq -r 'first(.inbounds[] | select(.protocol == "http")) | .port' /etc/v2raya/config.json) # extra first http port
+    port=$(sudo jq -r 'first(.inbounds[] | select(.protocol == "http")) | .port' /etc/v2raya/config.json) # extra first http port
 
     git config --global http.proxy http://127.0.0.1:$port # setup git http proxy
     git config --global https.proxy https://127.0.0.1:$port # set up git https proxy

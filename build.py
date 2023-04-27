@@ -1,7 +1,7 @@
 import typer
-import loguru
+from loguru import logger
 from importlib import import_module
-from base import cmd, ProjectRoot
+from base import Path, cmd, ProjectRoot
 from packages.zsh.zsh import ZSH
 from packages.conda.conda import Conda
 from packages import neovim, node, jupyter
@@ -17,12 +17,17 @@ apt_enhanced_pkgs = [
     "httpie",
     "exa",
     "neovim",
-    "bat" "btop" "net-tools" "ncdu",
+    "bat",
+    "btop",
+    "net-tools",
+    "ncdu",
     "fd",
     "fzf",
     "ranger",
     "tree",
 ]
+
+OneDrivePath = Path("/mnt/d/OneDrive")
 
 
 def continue_after_fail():
@@ -33,9 +38,10 @@ def continue_after_fail():
 # apt_packages_optional=["gnupg", "htop", "jq", "pass", "pwgen", "rsync", "shellcheck", "unzip"]
 
 
+# deprecated, rewrite needed
 def apt_install(*packages):
     base_cmd = "sudo apt-get update && sudo apt-get install -y"
-    if len(packages) == 1 and isinstance(packages, list):
+    if len(packages) == 1 and isinstance(packages[0], list):
         pkgs = " ".join(packages[0])
     else:
         pkgs = " ".join(packages)
@@ -44,6 +50,7 @@ def apt_install(*packages):
     return exec_result
 
 
+# deprecated, rewrite needed
 def install_pkgs(pkgs: list[str]):
     pkg_str = " ".join(pkgs)
     install_optional = input(
@@ -84,16 +91,21 @@ def customize_install():
     # node.install()
     jupyter.install()
 
+
 @cli.command()
 def install(mod_name: str):
-    mod = import_module(f"packages.{mod_name}")
-    mod.install()
+    if mod_name == "core":
+        pkgs = apt_pkgs + apt_enhanced_pkgs
+        apt_install(pkgs)
+    else:
+        mod = import_module(f"packages.{mod_name}")
+        mod.install()
 
 
 def main():
     install_sys_pkgs()
     customize_install()
-    loguru.success("build ends")
+    logger.success("build ends")
 
 
 if __name__ == "__main__":
