@@ -24,8 +24,8 @@ def _install_pkgs():
         "jupyter",
         "jupyterlab",
         "jupyterlab_code_formatter",
-        "black",
-        "isort",
+        # "black",
+        # "isort",
         "nb_conda_kernels",
         "jupyterlab-lsp",
         "python-lsp-server",
@@ -41,5 +41,5 @@ def _install_lsp():
 
 
 def install():
-    # _install_pkgs()
+    _install_pkgs()
     _install_lsp()

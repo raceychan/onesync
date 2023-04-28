@@ -1,16 +1,23 @@
 import typer
 from loguru import logger
 from importlib import import_module
-from base import Path, cmd, ProjectRoot
-from packages.zsh.zsh import ZSH
-from packages.conda.conda import Conda
-from packages import neovim, node, jupyter
+from pathlib import Path
+
+from base import cmd, ProjectRoot
+
+# from packages.zsh.zsh import ZSH
+# from packages.conda.conda import Conda
+# from packages import neovim, node
+# from packages.python import jupyter
+from mod_utils import search_module, import_module
+
 
 cli = typer.Typer()
 
 
 ACCEPTED_YES = ["y", "yes", "Y", "YES"]
 
+# NOTE: these should be moved to packages directory
 apt_pkgs = ["zsh", "curl", "ncdu", "git", "iproute2", "python3-pip", "ripgrep", "tmux"]
 
 apt_enhanced_pkgs = [
@@ -81,15 +88,22 @@ def install_sys_pkgs():
     """
 
 
-def customize_install():
-    # init zsh and set it to default shell
-    # ZSH().install()
+# def customize_install():
+#     # NOTE: Deprecated, use cli instead
 
-    # install conda and python environment
-    # Conda().install()
-    # neovim.install()
-    # node.install()
-    jupyter.install()
+#     # init zsh and set it to default shell
+#     ZSH().install()
+
+#     # install conda and python environment
+#     Conda().install()
+#     neovim.install()
+#     node.install()
+#     jupyter.install()
+
+# def main():
+#     install_sys_pkgs()
+#     customize_install()
+#     logger.success("build ends")
 
 
 @cli.command()
@@ -98,14 +112,8 @@ def install(mod_name: str):
         pkgs = apt_pkgs + apt_enhanced_pkgs
         apt_install(pkgs)
     else:
-        mod = import_module(f"packages.{mod_name}")
+        mod = import_module(search_module(mod_name))
         mod.install()
-
-
-def main():
-    install_sys_pkgs()
-    customize_install()
-    logger.success("build ends")
 
 
 if __name__ == "__main__":
