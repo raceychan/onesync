@@ -19,7 +19,6 @@ class ZSH(Package):
         return self.root_dir / "zsh-plugins"
 
     # install conda and python environment
-
     def install_p10k(self):
         path = self.plugins_dir / "powerlevel10k"
         if not path.exists():
