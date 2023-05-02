@@ -1,6 +1,10 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Welcome
 
+"""
+Make a tui for onesync
+"""
+
 
 class WelcomeApp(App):
     def compose(self) -> ComposeResult:

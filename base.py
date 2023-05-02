@@ -3,14 +3,17 @@ from subprocess import PIPE, CalledProcessError, CompletedProcess, run
 from typing import Final, Union
 from loguru import logger
 from tomli import loads as load_toml
+from abc import ABC, abstractmethod
 
 
 NONE_SENTINEL: Final = object()
+ProjectRoot = Path.cwd()
 
 
 def cmd(
     *args, timeout=60, shell=True, check=True, text=True, bufsize=-1, **kwargs
 ) -> CompletedProcess | None:
+    # NOTE: rewrite needed so that output shows out on screen simutaneously
     try:
         cp = run(
             *args,
@@ -76,8 +79,9 @@ def git_clone(url: str, path: str | Path, https: bool = True, **kwargs):
     return path
 
 
-class Package:
+class Package(ABC):
     dependencies: list["str|Package"] = []
+    version: str
 
     def __init__(self, version: str = "latest"):
         self.version = version
@@ -102,8 +106,16 @@ class Package:
         self.dependency_check()
         self.install()
 
+    @abstractmethod
     def install(self):
+        """
+        customized installing method of the package
+        """
         raise NotImplementedError
 
-
-ProjectRoot = Path.cwd()
+    @abstractmethod
+    def sync_conf(self):
+        """
+        abstractmethod used to sync config files of the package.
+        """
+        raise NotImplementedError
