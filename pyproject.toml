@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "onlysync"
+version = "0.1.0"
+description = "A cloud-driven linux deps and config management tool"
+authors = ["raceychan <raceychan@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.11"
+typer = "^0.8.0"
+loguru = "^0.7.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

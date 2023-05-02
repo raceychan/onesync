@@ -2,9 +2,9 @@ from pathlib import Path
 from types import ModuleType
 from importlib import import_module as raw_import_module
 from erros import ModuleNotFoundError
+from settings import IGNORED_DIR
 
 
-IGNORED_DIR = {".ipynb_checkpoints", "__pycache__"}
 
 
 def as_importable(pypath: str | Path):

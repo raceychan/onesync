@@ -1,15 +1,9 @@
-import os
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, CompletedProcess, run
 from typing import Final, Union
-
-# import logging
 from loguru import logger
+from tomli import loads as load_toml
 
-# logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
-# logger = logging.getLogger(__file__)
-
-# from asyncio.subprocess import create_subprocess_exec, create_subprocess_shell, Process
 
 NONE_SENTINEL: Final = object()
 
@@ -33,15 +27,12 @@ def cmd(
         print(ce.stderr)
         print(f"Failed to execute {args}")
     else:
-        # for line in iter(cp.stdout):
-        #     print(line)
         if isinstance(cp.stdout, str):
             print(cp.stdout)
         return cp
 
 
 def get_sys_number() -> str | None:
-    # 22.04
     res = cmd("lsb_release -a 2>/dev/null | grep 'Release:' | awk '{print $2}'")
     if res and res.stdout:
         sys_num = res.stdout.strip()

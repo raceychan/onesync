@@ -7,7 +7,7 @@ from loguru import logger
 def sync_zsh():
     onedrive_dir = os.environ.get("ONEDRIVE_DIR", "/mnt/d/OneDrive")
     dotfiles_dir = Path(onedrive_dir) / "Config/linux/dotfiles"
-    
+
     local_zshrc = Path.home() / ".zshrc"
     remote_zshrc = dotfiles_dir / ".zshrc"
     local_zshrc_copy = Path.home() / "local.zshrc.copy"
@@ -41,3 +41,7 @@ def sync_zsh():
             )
             shutil.copy(local_zshrc, local_zshrc_copy)
             shutil.copy(remote_zshrc, local_zshrc)
+
+
+if __name__ == "__main__":
+    sync_zsh()
