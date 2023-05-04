@@ -1,22 +1,31 @@
 from pathlib import Path
 from types import ModuleType
-from importlib import import_module as raw_import_module
+from importlib import import_module as importlib_import
 from erros import ModuleNotFoundError
-from settings import IGNORED_DIR
-
-
+from config import settings
 
 
 def as_importable(pypath: str | Path):
-    return str(pypath).replace("/", ".")[:-3]
+    """
+    Examples
+    --------
+    >>> as_importable("packages/python/jupyter.py")
+    ... packages.python.jupyter
+    """
+
+    importable = str(pypath).replace("/", ".").rstrip(".py")
+    return importable
 
 
 def import_module(name: str | Path, package=None) -> ModuleType:
-    if isinstance(name, Path):
-        importable = as_importable(name)
-        mod = raw_import_module(importable, package)
-    else:
-        mod = raw_import_module(name, package)
+    """
+    A wrapper on importlib.import_module, add a feature which supports module path as input
+    Examples
+    --------
+    import_module(Path("importer.py"))
+    """
+    importable = as_importable(name)
+    mod = importlib_import(importable, package)
     return mod
 
 
@@ -36,7 +45,7 @@ def get_submodules(package_dir: Path) -> list[Path]:
     files = []
     for f in package_dir.iterdir():
         if f.is_dir():
-            if f.name in IGNORED_DIR:
+            if f.name in settings.IGNORED_DIR:
                 continue
             files.extend(get_submodules(f))
         elif is_py_module(f):
@@ -57,7 +66,10 @@ def import_submodules(package: Path) -> None:
         import_module(mod)
 
 
-def search_module(mod_name: str, package=Path.cwd()) -> Path:
+def search_module(mod_name: str, *, package=Path.cwd()) -> Path:
+    """
+    return the first module that matches the mod_name
+    """
     sub_mods = get_relative_submodules(package)
     for mod in sub_mods:
         if as_importable(mod.name) == mod_name:

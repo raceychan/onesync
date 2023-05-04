@@ -1,10 +1,10 @@
 from base import cmd
-from settings import ACCEPTED_YES
+from config import settings
 
 
 def continue_after_fail():
     ans = input("Failed to install core packages, do you want to continue? (y/n):")
-    return ans in ACCEPTED_YES
+    return ans in settings.ACCEPTED_YES
 
 
 # deprecated, rewrite needed
@@ -28,7 +28,7 @@ def install_pkgs(pkgs: list[str]):
         + pkg_str
         + "\n"
     )
-    if install_optional in ACCEPTED_YES or install_optional == "":
+    if install_optional in settings.ACCEPTED_YES or install_optional == "":
         try:
             apt_install(pkg_str)
         except Exception:
