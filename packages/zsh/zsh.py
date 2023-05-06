@@ -5,6 +5,7 @@ from base import cmd, Package, git_clone, NONE_SENTINEL, logger
 from pathlib import Path
 
 
+
 class ZSH(Package):
     def __init__(self, root_dir: Path | None = None, as_default: bool = True):
         super().__init__()

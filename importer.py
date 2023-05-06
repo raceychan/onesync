@@ -14,8 +14,7 @@ def as_importable(pypath: str | Path):
     >>> as_importable("packages/python/jupyter.py")
     ... packages.python.jupyter
     """
-
-    importable = str(pypath).replace("/", ".").rstrip(".py")
+    importable = str(pypath).replace("/", ".").removesuffix(".py")
     return importable
 
 
