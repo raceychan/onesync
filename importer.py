@@ -3,6 +3,8 @@ from types import ModuleType
 from importlib import import_module as importlib_import
 from erros import ModuleNotFoundError
 from config import settings
+from base import Package
+from typing import Type
 
 
 def as_importable(pypath: str | Path):
@@ -17,9 +19,10 @@ def as_importable(pypath: str | Path):
     return importable
 
 
-def import_module(name: str | Path, package=None) -> ModuleType:
+def import_module(name: str | Path, package: str | None = None) -> ModuleType:
     """
     A wrapper on importlib.import_module, add a feature which supports module path as input
+
     Examples
     --------
     import_module(Path("importer.py"))
@@ -29,7 +32,7 @@ def import_module(name: str | Path, package=None) -> ModuleType:
     return mod
 
 
-def is_py_module(f: Path, exclude_init=True) -> bool:
+def is_py_module(f: Path, exclude_init: bool = True) -> bool:
     f_name = f.name
     if not f.is_file():
         return False
@@ -38,14 +41,16 @@ def is_py_module(f: Path, exclude_init=True) -> bool:
     return f_name[-3:] == ".py"
 
 
-def get_submodules(package_dir: Path) -> list[Path]:
+def get_submodules(
+    package_dir: Path, skip_dirs: set[str] = settings.IGNORED_DIR
+) -> list[Path]:
     """
     list all sub-modules of a given package dir, return them in a list of absolute path
     """
     files = []
     for f in package_dir.iterdir():
         if f.is_dir():
-            if f.name in settings.IGNORED_DIR:
+            if f.name in skip_dirs:
                 continue
             files.extend(get_submodules(f))
         elif is_py_module(f):
@@ -66,7 +71,7 @@ def import_submodules(package: Path) -> None:
         import_module(mod)
 
 
-def search_module(mod_name: str, *, package=Path.cwd()) -> Path:
+def search_module(mod_name: str, *, package: Path = Path.cwd()) -> Path:
     """
     return the first module that matches the mod_name
     """
@@ -76,3 +81,22 @@ def search_module(mod_name: str, *, package=Path.cwd()) -> Path:
             return mod
     else:
         raise ModuleNotFoundError
+
+
+def ez_import(mod_name: str, package: str | None = None) -> ModuleType:
+    """
+    NOTE: fix edge cases, eg: raise warning or exception for case
+    where there is more than one candidate module
+    """
+    if package:
+        pkg = import_module(search_module(mod_name, package=Path(package)), package)
+    else:
+        pkg = import_module(search_module(mod_name))
+    return pkg
+
+
+def get_package(mod_name: str) -> Type[Package] | None:
+    """
+    Given a mod_name, return the registered package from the module
+    """
+    return Package.registry.get(mod_name)

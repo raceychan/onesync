@@ -1,7 +1,6 @@
-from typer import Typer as Cli, Argument, Op
-
+from typer import Typer as Cli, Argument, Option
 from typing import Annotated
-from importer import import_module, search_module
+from importer import ez_import, get_package
 
 # from typing_extensions import Annotated
 
@@ -22,15 +21,24 @@ def install(
     --------
     pass
     """
-
-    mod = import_module(search_module(mod_name))
-    mod.install()
+    pass
+    # if pkg_clz := get_package(mod_name):
+    #     pkg_clz.lazy_init().install()
+    # else:
+    #     ez_import(mod_name).install()
 
 
 @cli.command()
-def sync(mod_name: str = ""):
-    mod = import_module(search_module(mod_name))
-    print("syncing dotfiles")
+def sync(mod_name: str):
+    # NOTE: need to first import before instantiate the class
+    mod = ez_import(mod_name)
+    if pkg_clz := get_package(mod.__name__):
+        pkg_clz().sync_conf()
+    else:
+        if hasattr(mod, "sync_conf"):
+            mod.sync_conf()
+        else:
+            raise NotImplementedError
 
 
 if __name__ == "__main__":

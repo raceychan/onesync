@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, CompletedProcess, run
-from typing import Final, Union
+from typing import Final, Union, Type, Any
 from loguru import logger
 from tomli import loads as load_toml
 from abc import ABC, abstractmethod
@@ -88,6 +88,8 @@ def _sync_copy_log(filename: str, missed: Path, found: Path):
 
 
 class Package(ABC):
+    registry: dict[str, Type["Package"]] = dict()
+
     def __init__(
         self,
         *,
@@ -103,6 +105,9 @@ class Package(ABC):
         self.dependencies = dependencies
         self.onedrive_dotfiles = onedrive_dotfiles
 
+    def __init_subclass__(cls) -> None:
+        cls.registry[cls.__module__] = cls
+
     @cached_property
     def doc(self):
         return self.__class__.__doc__
@@ -112,7 +117,7 @@ class Package(ABC):
         return self.config_file.name
 
     @cached_property
-    def config_copy(self) -> Path | str:
+    def config_copy(self) -> str:
         """
         Return filename is in the format ``"package.config_filename.copy"``
 
@@ -136,6 +141,39 @@ class Package(ABC):
         local_copy = copy_path / self.config_copy
         return local_copy
 
+    @abstractmethod
+    def install(self):
+        """
+        customized installing method of the package
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def register(cls, *args, **kwargs):
+        """
+        A decorator used to register a class as package.
+
+        @Package.register
+        class Tmux:
+            ...
+        """
+
+        def package_cls(pkg_clz: Type[Any]):
+            cls.registry[pkg_clz.__module__] = pkg_clz
+            return pkg_clz
+
+        if not kwargs and len(args) == 1:
+            # case where no args and kwargs were inputed
+            ...
+        else:
+            wrapper = package_cls
+
+        return package_cls
+
+    @classmethod
+    def lazy_init(cls, **kwargs):
+        return cls(**kwargs)
+
     def dependency_check(self):
         if not self.dependencies:
             return
@@ -147,13 +185,6 @@ class Package(ABC):
     def build(self):
         self.dependency_check()
         self.install()
-
-    @abstractmethod
-    def install(self):
-        """
-        customized installing method of the package
-        """
-        raise NotImplementedError
 
     def sync_conf(self):
         """
