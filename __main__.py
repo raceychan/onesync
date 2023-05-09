@@ -5,6 +5,7 @@ from importer import ez_import, get_package
 # from typing_extensions import Annotated
 
 cli = Cli()
+# NOTE: avoid too many dependencies, since manually install dependencies before using this installing tool is trivial
 
 
 @cli.command(no_args_is_help=True)
@@ -22,10 +23,14 @@ def install(
     pass
     """
     pass
-    # if pkg_clz := get_package(mod_name):
-    #     pkg_clz.lazy_init().install()
-    # else:
-    #     ez_import(mod_name).install()
+    mod = ez_import(mod_name)
+    if pkg_clz := get_package(mod.__name__):
+        pkg_clz().install()
+    else:
+        if hasattr(mod, "install"):
+            mod.install()
+        else:
+            raise NotImplementedError
 
 
 @cli.command()
