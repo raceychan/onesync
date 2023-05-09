@@ -5,7 +5,6 @@ from base import cmd, Package, git_clone, NONE_SENTINEL, logger
 from pathlib import Path
 
 
-<<<<<<< HEAD
 def set_as_default():
     """
     NOTE: this method requires an updated version of cmd
@@ -13,8 +12,6 @@ def set_as_default():
     """
     cmd("chsh -s $(which zsh)")
 
-=======
->>>>>>> 224f14f269d4dde9610fe3c9e92313781bceaf09
 
 class ZSH(Package):
     def __init__(self, root_dir: Path | None = None, as_default: bool = True):
