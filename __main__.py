@@ -25,8 +25,6 @@ def install(
     if pkg_clz := get_package(mod.__name__):
         pkg_clz().install()
     else:
-        # if not hasattr(mod, "install"):
-            # raise NotImplementedError
         try:
             mod.install()
         except AttributeError:
