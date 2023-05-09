@@ -1,17 +1,29 @@
 import shutil
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, CompletedProcess, run
-from typing import Final, Union, Type, Any
+from typing import Final, Union, Type, Any, Annotated
 from loguru import logger
 from tomli import loads as load_toml
 from abc import ABC, abstractmethod
 from functools import cached_property
-from config import settings
+from config import Settings
 
 
 NONE_SENTINEL: Final = object()
 ProjectRoot = Path.cwd()
 
+
+StrPath = str | Path
+
+def safe_copy(
+    src: StrPath,
+    dst: StrPath,
+    *,
+    follow_symlinks: bool = True
+) -> Path:
+    if not (target := Path(dst)).parent.exists():
+        target.mkdir()
+    return shutil.copy(src, dst, follow_symlinks=follow_symlinks)
 
 def cmd(
     *args, timeout=60, shell=True, check=True, text=True, bufsize=-1, **kwargs
@@ -95,9 +107,9 @@ class Package(ABC):
         *,
         name: str = "",
         version: str = "latest",
-        config_file: Path = Path(""),
         dependencies: list["str|Package"] = [],
-        onedrive_dotfiles: Path = settings.ONEDRIVE_DOTFILES,
+        config_file: Path = Path(""),
+        onedrive_dotfiles: Path = Path(""),
     ):
         self.name = name or self.__class__.__name__.lower()
         self.version = version
@@ -106,11 +118,12 @@ class Package(ABC):
         self.onedrive_dotfiles = onedrive_dotfiles
 
     @classmethod
-    def from_settings(cls, settings):
+    def from_settings(cls: Type["Package"], settings: Settings):
         """
         factory method to create Package instance using settings
         """
-        ...
+        raise NotImplementedError
+        
 
     def __init_subclass__(cls) -> None:
         cls.registry[cls.__module__] = cls
@@ -121,6 +134,8 @@ class Package(ABC):
 
     @cached_property
     def config_filename(self):
+        if not self.config_file:
+            raise Exception("config_file not set")
         return self.config_file.name
 
     @cached_property
@@ -164,6 +179,10 @@ class Package(ABC):
         class Tmux:
             ...
         """
+
+        class PackageLike:
+            def __init__(self, pkg_clz: Type[Any]):
+                ...
 
         def package_cls(pkg_clz: Type[Any]):
             cls.registry[pkg_clz.__module__] = pkg_clz
@@ -236,17 +255,18 @@ class Package(ABC):
                 f"Local {self.config_filename} file is newer. Syncing it to {self.onedrive_dotfiles}."
             )
             # make a copy of conf file in remote NOTE: check path exists
-            shutil.copy(remote_conf, remote_copy)
+            safe_copy(remote_conf, remote_copy)
             # replace remote conf with local conf
-            shutil.copy(self.config_file, remote_conf)
+            safe_copy(self.config_file, remote_conf)
         elif local_mtime < remote_mtime:
             logger.info(
                 f"Remote {self.config_filename} file is newer. Syncing it to {self.config_file}"
             )
             # make a copy of conf file in local
-            shutil.copy(self.config_file, self.local_copy_path)
+            breakpoint()
+            safe_copy(self.config_file, self.local_copy_path)
             # replace local conf with remote conf
-            shutil.copy(remote_conf, self.config_file)
+            safe_copy(remote_conf, self.config_file)
         else:
             # TODO: implement file conflict algorithm
             raise Exception("Remote and Local modify time is the same")

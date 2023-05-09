@@ -1,7 +1,10 @@
 from base import cmd, git_clone
 
+
 def _install_deps():
-    cmd("sudo apt -y install curl dirmngr apt-transport-https lsb-release ca-certificates")
+    cmd(
+        "sudo apt -y install curl dirmngr apt-transport-https lsb-release ca-certificates"
+    )
 
 
 def install():

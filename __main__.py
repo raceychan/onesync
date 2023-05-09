@@ -10,8 +10,8 @@ cli = Cli()
 
 @cli.command(no_args_is_help=True)
 def install(
-    mod_name: Annotated[str, Argument("", help="the name of pacakge you want to install")],  # type: ignore
-    package: Annotated[str, Option("", help="parent package")] = "packages",  # type: ignore
+    mod_name: Annotated[str, Argument(help="the name of pacakge you want to install")],  # type: ignore
+    package: Annotated[str, Option(help="parent package")] = None,  # type: ignore
 ):
     """
     The default entry point of the program.
@@ -22,7 +22,7 @@ def install(
     --------
     pass
     """
-    mod = ez_import(mod_name)
+    mod = ez_import(mod_name, package)
     if pkg_clz := get_package(mod.__name__):
         pkg_clz().install()
     else:
@@ -30,6 +30,7 @@ def install(
             mod.install()
         except AttributeError:
             raise NotImplementedError
+
 
 @cli.command()
 def sync(mod_name: str):

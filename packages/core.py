@@ -11,7 +11,6 @@ apt_enhanced_pkgs = [
     "bat",
     "btop",
     "net-tools",
-    "ncdu",
     "fd",
     "fzf",
     "ranger",
