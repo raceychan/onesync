@@ -17,7 +17,6 @@ def _export_path():
 def _enable_autocomplt():
     cmd("poetry completions zsh > ~/.zfunc/_poetry")
     # adding these to .zshrc
-
     # fpath+=~/.zfunc
     # autoload -Uz compinit && compinit
 

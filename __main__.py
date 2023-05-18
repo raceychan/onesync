@@ -1,6 +1,7 @@
 from typer import Typer as Cli, Argument, Option
 from typing import Annotated
-from importer import ez_import, get_package
+from importer import ez_import, import_package, import_configurable
+from config import settings
 
 # from typing_extensions import Annotated
 
@@ -22,26 +23,14 @@ def install(
     --------
     pass
     """
-    mod = ez_import(mod_name, package)
-    if pkg_clz := get_package(mod.__name__):
-        pkg_clz().install()
-    else:
-        try:
-            mod.install()
-        except AttributeError:
-            raise NotImplementedError
+    mod = import_package(mod_name, package)
+    mod.install()
 
 
 @cli.command()
 def sync(mod_name: str):
-    mod = ez_import(mod_name)
-    if pkg_clz := get_package(mod.__name__):
-        pkg_clz().sync_conf()
-    else:
-        try:
-            mod.sync_conf()
-        except AttributeError:
-            raise NotImplementedError
+    mod = import_configurable(mod_name)
+    mod.sync_conf()
 
 
 if __name__ == "__main__":

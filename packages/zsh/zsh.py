@@ -1,8 +1,6 @@
-import shutil
-import os
-import shutil
-from base import cmd, Package, git_clone, NONE_SENTINEL, logger
+from base import cmd, Configurable, git_clone, NONE_SENTINEL, logger
 from pathlib import Path
+from config import Settings
 
 
 def set_as_default():
@@ -13,12 +11,27 @@ def set_as_default():
     cmd("chsh -s $(which zsh)")
 
 
-class ZSH(Package):
-    def __init__(self, root_dir: Path | None = None, as_default: bool = True):
-        super().__init__()
-        self.root_dir = root_dir or Path.home() / ".zsh"
+class ZSH(Configurable):
+    def __init__(
+        self,
+        *,
+        config_file: Path,
+        onedrive_config: Path,
+        root_dir: Path = Path.home() / ".zsh",
+        as_default: bool = True,
+    ):
+        super().__init__(config_file=config_file, onedrive_config=onedrive_config)
+        self.root_dir = root_dir
         self.as_default = as_default
         self._is_installed = False
+
+    @classmethod
+    def from_settings(cls, settings: Settings):
+        # This should be generalized, config path can be built with pattern
+        return cls(
+            config_file=settings.zsh.CONFIG_FILE,
+            onedrive_config=settings.zsh.ONEDRIVE_CONFIG,
+        )
 
     @property
     def is_installed(self) -> bool:
@@ -72,7 +85,7 @@ class ZSH(Package):
 
         # TODO: rewrite this, accept a list of plugins
         logger.info(f"installing {self.name} plugins")
-        self.plugins_dir.mkdir(exist_ok=True)
+        self.plugins_dir.mkdir(exist_ok=True, parents=True)
 
         self.install_p10k()
         self.install_autojump()
@@ -80,17 +93,17 @@ class ZSH(Package):
         self.install_zsh_autosuggestion()
         self.install_synx_highlighting()
 
-    def install(self, **kwargs):
+    def install(self):
         self.install_plugins()
         self.sync_conf()
 
         if self.as_default and not self.is_default_shell:
-            sh_path = Path(__file__).parent / "set_as_default.sh"
+            # sh_path = Path(__file__).parent / "set_as_default.sh"
             logger.warning(
-                f"{self.name} is not default shell, execute {str(sh_path)} to change"
+                f"{self.name} is not default shell"
             )
 
-        self._is_installed = False
+        self._is_installed = True
 
     @property
     def is_default_shell(self):

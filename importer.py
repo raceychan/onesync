@@ -3,7 +3,7 @@ from types import ModuleType
 from importlib import import_module as importlib_import
 from erros import ModuleNotFoundError
 from config import settings
-from base import Package
+from base import Package, Configurable
 from typing import Type
 
 
@@ -98,4 +98,28 @@ def get_package(mod_name: str) -> Type[Package] | None:
     """
     Given a mod_name, return the registered package from the module
     """
-    return Package.registry.get(mod_name)
+    pkg_clz = Package.registry.get(mod_name)
+    return pkg_clz
+
+
+# NOTE: this method shoud be removed, use get_package directly
+# when we solve the Configurable.from_settings issue
+def get_configurable(mod_name: str) -> Type[Configurable] | None:
+    cfg_clz = Configurable.registry.get(mod_name)
+    return cfg_clz
+
+
+def import_package(mod_name: str, package) -> Package | ModuleType:
+    mod = ez_import(mod_name, package)
+    if pkg_clz := get_package(mod.__name__):
+        return pkg_clz()
+    else:
+        return mod
+
+
+def import_configurable(mod_name: str) -> Configurable | ModuleType:
+    mod = ez_import(mod_name)
+    if pkg_clz := get_configurable(mod.__name__):
+        return pkg_clz.from_settings(settings)  # type: ignore
+    else:
+        return mod

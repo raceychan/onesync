@@ -6,7 +6,7 @@ Make a tui for onesync
 """
 
 
-class WelcomeApp(App):
+class OneSync(App):
     def compose(self) -> ComposeResult:
         yield Welcome()
 
@@ -15,5 +15,5 @@ class WelcomeApp(App):
 
 
 if __name__ == "__main__":
-    app = WelcomeApp()
+    app = OneSync()
     app.run()
