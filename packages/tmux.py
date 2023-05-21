@@ -1,7 +1,5 @@
-import shutil
-from base import cmd
+from base import cmd, safe_copy, Configurable
 from pathlib import Path
-from shutil import copy
 
 
 config_file = Path("~/.tmux.conf")
@@ -12,6 +10,10 @@ base_conf = """
 set -g default-terminal "xterm-256color"
 set-option -ga terminal-overrides ",xterm-256color:Tc"
 """
+
+
+class Tmux(Configurable):
+    config_file = ...
 
 
 def _set_up_config():

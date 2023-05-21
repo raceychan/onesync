@@ -28,6 +28,9 @@ apt_packages_optional = [
     "unzip",
 ]
 
+# NOTE: some of these packages needs extra care
+# exa can't be installed natively in Ubuntu 20
+
 
 def install_core_pkgs():
     """
