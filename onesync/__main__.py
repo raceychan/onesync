@@ -1,7 +1,8 @@
 from typer import Typer as Cli, Argument, Option
 from typing import Annotated
-from importer import ez_import, import_package, import_configurable
-from config import settings
+from importer import import_package, import_configurable
+
+# from onesync.config import settings
 
 # from typing_extensions import Annotated
 

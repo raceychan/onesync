@@ -1,7 +1,7 @@
 import os
 import time
 import pytest
-from base import Package
+from onesync.base import Package
 from pathlib import Path
 
 

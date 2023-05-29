@@ -33,7 +33,10 @@ function setup_git(){
     port=$(sudo jq -r 'first(.inbounds[] | select(.protocol == "http")) | .port' /etc/v2raya/config.json) # extra first http port
 
     git config --global http.proxy http://127.0.0.1:$port # setup git http proxy
-    git config --global https.proxy https://127.0.0.1:$port # set up git https proxy
+    git config --global https.proxy https://127.0.0.1:$port # https 
+    export http_proxy=http://127.0.0.1:20172
+    export https_proxy=http://127.0.0.1:20172
+    export all_proxy=socks5://127.0.0.1:20170
 }
 
 function main(){

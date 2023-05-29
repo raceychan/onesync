@@ -1,4 +1,4 @@
-from base import cmd
+from base import shell
 
 
 SCRIPT_URL = "https://install.python-poetry.org"
@@ -7,15 +7,15 @@ POETRY_PATH = "~/.local/share/pypoetry"
 
 def _download_install_script():
     if ...:
-        cmd(f"curl -sSL {SCRIPT_URL} | POETRY_HOME={POETRY_PATH} python3 -")
+        shell(f"curl -sSL {SCRIPT_URL} | POETRY_HOME={POETRY_PATH} python3 -")
 
 
 def _export_path():
-    cmd("export PATH=$HOME/.local/share/pypoetry/bin:$PATH")
+    shell("export PATH=$HOME/.local/share/pypoetry/bin:$PATH")
 
 
 def _enable_autocomplt():
-    cmd("poetry completions zsh > ~/.zfunc/_poetry")
+    shell("poetry completions zsh > ~/.zfunc/_poetry")
     # adding these to .zshrc
     # fpath+=~/.zfunc
     # autoload -Uz compinit && compinit

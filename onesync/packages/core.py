@@ -1,5 +1,5 @@
-from base import load_toml
-from installer import apt_install
+# from base import load_toml
+from onesync.installer import apt_install
 
 # TODO: read from dependency.toml
 apt_pkgs = ["zsh", "curl", "ncdu", "git", "iproute2", "python3-pip", "ripgrep", "tmux"]

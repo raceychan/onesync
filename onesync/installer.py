@@ -1,4 +1,4 @@
-from base import cmd
+from base import shell
 from config import settings
 
 
@@ -15,7 +15,7 @@ def apt_install(*packages):
     else:
         pkgs = " ".join(packages)
     print(f"Installing {pkgs}")
-    exec_result = cmd(f"{base_cmd} {pkgs}")
+    exec_result = shell(f"{base_cmd} {pkgs}")
     return exec_result
 
 

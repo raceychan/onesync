@@ -1,4 +1,4 @@
-from base import cmd, Configurable, git_clone, NONE_SENTINEL, logger
+from base import shell, Configurable, git_clone, NONE_SENTINEL, logger
 from pathlib import Path
 from config import Settings
 
@@ -8,7 +8,7 @@ def set_as_default():
     NOTE: this method requires an updated version of cmd
     since it requires user input for password
     """
-    cmd("chsh -s $(which zsh)")
+    shell("chsh -s $(which zsh)")
 
 
 class ZSH(Configurable):
@@ -28,6 +28,7 @@ class ZSH(Configurable):
     @classmethod
     def from_settings(cls, settings: Settings):
         # This should be generalized, config path can be built with pattern
+        # TODO: remove, packages should not need to be instantiated
         return cls(
             config_file=settings.zsh.CONFIG_FILE,
             onedrive_config=settings.zsh.ONEDRIVE_CONFIG,
@@ -46,7 +47,7 @@ class ZSH(Configurable):
         path = self.plugins_dir / "powerlevel10k"
         if not path.exists():
             git_clone("https://github.com/romkatv/powerlevel10k.git", path, depth=1)
-            cmd(f"""echo 'source {path}/powerlevel10k.zsh-theme' >>~/.zshrc""")
+            shell(f"""echo 'source {path}/powerlevel10k.zsh-theme' >>~/.zshrc""")
 
     def install_zsh_nord(self):
         path = self.plugins_dir / "zsh-dircolors-nord"
@@ -56,26 +57,26 @@ class ZSH(Configurable):
                 path,
                 recursive=NONE_SENTINEL,
             )
-            cmd(f"source {path}/zsh-dircolors-nord.zsh")
+            shell(f"source {path}/zsh-dircolors-nord.zsh")
 
     def install_zsh_autosuggestion(self):
         path = self.plugins_dir / "zsh-autosuggestions"
         if not path.exists():
             git_clone("https://github.com/zsh-users/zsh-autosuggestions", path)
-            cmd(f"source {str(path)}/zsh-autosuggestions.zsh")
+            shell(f"source {str(path)}/zsh-autosuggestions.zsh")
 
     def install_synx_highlighting(self):
         path = self.plugins_dir / "zsh-syntax-highlighting"
         if not path.exists():
             git_clone("https://github.com/zsh-users/zsh-syntax-highlighting.git", path)
-            cmd(f"source {str(path)}/zsh-syntax-highlighting.zsh")
+            shell(f"source {str(path)}/zsh-syntax-highlighting.zsh")
 
     def install_autojump(self):
         path = self.plugins_dir / "autojump"
         if not path.exists():
             git_clone("git@github.com:wting/autojump.git", str(path))
             install_py = path / "install.py"
-            cmd(f"cd {str(path)} && python {str(install_py)}")
+            shell(f"cd {str(path)} && python {str(install_py)}")
 
     def install_plugins(self):
         """
@@ -99,13 +100,11 @@ class ZSH(Configurable):
 
         if self.as_default and not self.is_default_shell:
             # sh_path = Path(__file__).parent / "set_as_default.sh"
-            logger.warning(
-                f"{self.name} is not default shell"
-            )
+            logger.warning(f"{self.name} is not default shell")
 
         self._is_installed = True
 
     @property
     def is_default_shell(self):
-        res = cmd("ps -p $$ | awk 'FNR == 2 {print $4}'")
+        res = shell("ps -p $$ | awk 'FNR == 2 {print $4}'")
         return res and res.stdout.strip() == self.name

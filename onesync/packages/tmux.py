@@ -1,4 +1,4 @@
-from base import cmd, safe_copy, Configurable
+from base import shell, safe_copy, Configurable
 from pathlib import Path
 
 
@@ -27,11 +27,11 @@ def _set_up_config():
     if alter_path.exists() and config_file.exists():
         return
     elif alter_path.exists():
-        cmd(f"mv {alter_path} {config_file}")
+        shell(f"mv {alter_path} {config_file}")
     else:
-        cmd(f"touch {config_file}")
+        shell(f"touch {config_file}")
         _set_up_config()
 
 
 def install():
-    cmd("")
+    shell("")

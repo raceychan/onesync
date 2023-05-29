@@ -1,10 +1,10 @@
 from pathlib import Path
 from types import ModuleType
+from typing import Type
 from importlib import import_module as importlib_import
 from erros import ModuleNotFoundError
 from config import settings
 from base import Package, Configurable
-from typing import Type
 
 
 def as_importable(pypath: str | Path):
@@ -112,12 +112,17 @@ def get_configurable(mod_name: str) -> Type[Configurable] | None:
 def import_package(mod_name: str, package) -> Package | ModuleType:
     mod = ez_import(mod_name, package)
     if pkg_clz := get_package(mod.__name__):
-        return pkg_clz()
+        if issubclass(pkg_clz, Configurable):
+            return pkg_clz.from_settings(settings)
+        else:
+            return pkg_clz()
     else:
         return mod
 
 
 def import_configurable(mod_name: str) -> Configurable | ModuleType:
+    # TODO: packages should not need to be instantilized,
+    # otherwise it would be painful to write more packages
     mod = ez_import(mod_name)
     if pkg_clz := get_configurable(mod.__name__):
         return pkg_clz.from_settings(settings)  # type: ignore

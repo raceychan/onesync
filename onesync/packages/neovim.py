@@ -36,5 +36,5 @@ def _download_latest_nvim():
 
 
 def install():
-    _download_latest_nvim()
-    NvChad.install()
+    # _download_latest_nvim()
+    LazyVim.install()

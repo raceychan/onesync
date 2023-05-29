@@ -1,4 +1,4 @@
-from base import cmd
+from base import shell
 
 # class Jupyter(Package):
 #     ...
@@ -32,12 +32,12 @@ def _install_pkgs():
     ]
 
     txt = f"conda install -c conda-forge {' '.join(pck for pck in packages)}"
-    cmd(txt)
+    shell(txt)
 
 
 def _install_lsp():
     for lsp in LSP:
-        cmd(LSP[lsp])
+        shell(LSP[lsp])
 
 
 def install():
