@@ -1,4 +1,4 @@
-from base import git_clone, shell
+from base import git_clone, shell, Configurable
 
 # NOTE: since this is a configurable package, we should make this a Configurable class
 

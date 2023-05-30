@@ -1,21 +1,22 @@
 import shutil
-import difflib
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, CompletedProcess, run
 from typing import Final, Union, Type, Any
-from loguru import logger
-
-# from tomli import loads as load_toml
 from abc import ABC, abstractmethod
 from functools import cached_property
+
+from loguru import logger
+from sh import md5sum
+
+# from tomli import loads as load_toml
 from config import SettingBase
 
 
 NONE_SENTINEL: Final = object()
 ProjectRoot = Path.cwd()
 
-
 StrPath = str | Path
+
 
 
 def safe_copy(src: Path, dst: Path, *, follow_symlinks: bool = True) -> Path:
@@ -47,6 +48,7 @@ def shell(
             stdout=PIPE,
             stderr=PIPE,
             bufsize=bufsize,
+            executable="/usr/bin/zsh",
             **kwargs,
         )
     except CalledProcessError as ce:
@@ -106,6 +108,9 @@ def _sync_copy_log(filename: str, missed: Path, found: Path):
     msg = f"No {filename} file found in {missed}. Syncing {filename} from {missed} to {found}"
     logger.info(msg)
 
+def are_same_file(*files):
+    md5sum(*files)
+        
 
 class Package(ABC):
     registry: dict[str, Type["Package"]] = dict()
@@ -207,7 +212,8 @@ class Configurable(Package):
     @cached_property
     def config_copy(self) -> str:
         """
-        Return filename in the format of ``"package.config_filename.copy"``
+        Return filename in the format of ``"package.config_filename.bak"``
+        NOTE: config could be either a dir or a single file
 
         Examples
         --------
@@ -215,12 +221,12 @@ class Configurable(Package):
         >>> package = zsh
         >>> config_filname = .zshrc
         >>> config_copy
-        ... zsh.zshrc.copy
+        ... zsh.zshrc.bak
         """
         if self.config_file.name.startswith("."):
-            file_name = f"{self.name}{self.config_file.name}.copy"
+            file_name = f"{self.name}{self.config_file.name}.bak"
         else:
-            file_name = f"{self.name}.{self.config_file.name}.copy"
+            file_name = f"{self.name}.{self.config_file.name}.bak"
         return file_name
 
     @cached_property
@@ -254,9 +260,9 @@ class Configurable(Package):
             self.update_conf()
 
     def update_conf(self):
-        # BUG: this method is not idem, it always sync whether file changed.
-        # NOTE: feature: use diff to compare files
-        # NOTE: feature: support autosync using watchdog to detech file changes
+        #BUG: this method is not idem, it always sync whether file changed.
+        #NOTE: feature: use diff to compare files
+        #NOTE: feature: support autosync using watchdog to detech file changes
 
         remote_conf = self.onedrive_config / self.config_filename
         remote_copy = self.onedrive_config / self.config_copy
