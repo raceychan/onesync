@@ -2,7 +2,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Type
 from importlib import import_module as importlib_import
-from erros import ModuleNotFoundError
+from errors import ModuleNotFoundError
 from config import settings
 from base import Package, Configurable
 

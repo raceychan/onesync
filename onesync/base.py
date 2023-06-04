@@ -1,4 +1,7 @@
+import os
+import re
 import shutil
+import hashlib
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, CompletedProcess, run
 from typing import Final, Union, Type, Any
@@ -6,7 +9,6 @@ from abc import ABC, abstractmethod
 from functools import cached_property
 
 from loguru import logger
-from sh import md5sum
 
 # from tomli import loads as load_toml
 from config import SettingBase
@@ -17,6 +19,73 @@ ProjectRoot = Path.cwd()
 
 StrPath = str | Path
 
+
+def _reduce_hash(hashlist, hashfunc):
+    hasher = hashfunc()
+    for hashvalue in sorted(hashlist):
+        hasher.update(hashvalue.encode("utf-8"))
+    return hasher.hexdigest()
+
+
+def filehash(filepath: Path):
+    hasher = hashlib.md5()
+    blocksize = 64 * 1024  # 64kb
+
+    if not os.path.exists(filepath):
+        return hasher.hexdigest()
+
+    with open(filepath, "rb") as fp:
+        while True:
+            data = fp.read(blocksize)
+            if not data:
+                break
+            hasher.update(data)
+    return hasher.hexdigest()
+
+
+def dirhash(
+    dirname,
+    excluded_files=[],
+    ignore_hidden=False,
+    followlinks=False,
+    excluded_extensions=[],
+    include_paths=False,
+):
+    hashvalues = []
+    for root, dirs, files in os.walk(dirname, topdown=True, followlinks=followlinks):
+        if ignore_hidden and re.search(r"/\.", root):
+            continue
+
+        dirs.sort()
+        files.sort()
+
+        for fname in files:
+            if ignore_hidden and fname.startswith("."):
+                continue
+
+            if fname.split(".")[-1:][0] in excluded_extensions:
+                continue
+
+            if fname in excluded_files:
+                continue
+
+            hash_list = filehash(os.path.join(root, fname))
+
+            hashvalues.append(hash_list)
+
+            if include_paths:
+                hasher = hashlib.md5()
+                # get the resulting relative path into array of elements
+                path_list = os.path.relpath(os.path.join(root, fname)).split(os.sep)
+                # compute the hash on joined list, removes all os specific separators
+                hasher.update("".join(path_list).encode("utf-8"))
+                hashvalues.append(hasher.hexdigest())
+
+    return _reduce_hash(hashvalues, hashlib.md5)
+
+
+def md5sum(path: Path):
+    return dirhash(path) if path.is_dir() else filehash(path)
 
 
 def safe_copy(src: Path, dst: Path, *, follow_symlinks: bool = True) -> Path:
@@ -108,11 +177,22 @@ def _sync_copy_log(filename: str, missed: Path, found: Path):
     msg = f"No {filename} file found in {missed}. Syncing {filename} from {missed} to {found}"
     logger.info(msg)
 
+
 def are_same_file(*files):
     md5sum(*files)
-        
+
+
+# provides a convenient way to combine commands, aim to replace multiple shell(command) call
+class Command(str):
+    def __new__(cls, *args):
+        return super().__new__(cls, *args)
+
+    def __add__(self, other):
+        return " && ".join((self, other))
+
 
 class Package(ABC):
+    # TODO: make this a dataclass, and this should not require instantiation
     registry: dict[str, Type["Package"]] = dict()
 
     def __init__(
@@ -193,9 +273,9 @@ class Package(ABC):
 class Configurable(Package):
     # registry: dict[str, Type["Configurable"]] = dict()
 
-    def __init__(self, *, config_file: Path, onedrive_config: Path):
+    def __init__(self, *, config_path: Path, onedrive_config: Path):
         super().__init__()
-        self.config_file = config_file
+        self.config_path = config_path
         self.onedrive_config = onedrive_config
 
     @classmethod
@@ -205,9 +285,9 @@ class Configurable(Package):
     @cached_property
     def config_filename(self) -> str:
         # NOTE: remove this, use self.config_file.name
-        if not self.config_file:
+        if not self.config_path:
             raise Exception("config_file not set")
-        return self.config_file.name
+        return self.config_path.name
 
     @cached_property
     def config_copy(self) -> str:
@@ -223,10 +303,10 @@ class Configurable(Package):
         >>> config_copy
         ... zsh.zshrc.bak
         """
-        if self.config_file.name.startswith("."):
-            file_name = f"{self.name}{self.config_file.name}.bak"
+        if self.config_path.name.startswith("."):
+            file_name = f"{self.name}{self.config_path.name}.bak"
         else:
-            file_name = f"{self.name}.{self.config_file.name}.bak"
+            file_name = f"{self.name}.{self.config_path.name}.bak"
         return file_name
 
     @cached_property
@@ -246,23 +326,23 @@ class Configurable(Package):
 
         remote_conf = self.onedrive_config / self.config_filename
 
-        if not self.config_file.exists() and not remote_conf.exists():
+        if not self.config_path.exists() and not remote_conf.exists():
             raise FileNotFoundError(
-                f"No {self.config_filename} file found in both {self.config_file} and {self.onedrive_config}."
+                f"No {self.config_filename} file found in both {self.config_path} and {self.onedrive_config}."
             )
         elif not remote_conf.exists():
-            _sync_copy_log(self.config_filename, self.onedrive_config, self.config_file)
-            shutil.copy(self.config_file, remote_conf)
-        elif not self.config_file.exists():
-            _sync_copy_log(self.config_filename, self.config_file, self.onedrive_config)
-            shutil.copy(remote_conf, self.config_file)
+            _sync_copy_log(self.config_filename, self.onedrive_config, self.config_path)
+            shutil.copy(self.config_path, remote_conf)
+        elif not self.config_path.exists():
+            _sync_copy_log(self.config_filename, self.config_path, self.onedrive_config)
+            shutil.copy(remote_conf, self.config_path)
         else:
             self.update_conf()
 
     def update_conf(self):
-        #BUG: this method is not idem, it always sync whether file changed.
-        #NOTE: feature: use diff to compare files
-        #NOTE: feature: support autosync using watchdog to detech file changes
+        # BUG: this method is not idem, it always sync whether file changed.
+        # NOTE: feature: use diff to compare files
+        # NOTE: feature: support autosync using watchdog to detech file changes
 
         remote_conf = self.onedrive_config / self.config_filename
         remote_copy = self.onedrive_config / self.config_copy
@@ -270,28 +350,36 @@ class Configurable(Package):
         # ConfigFile: Config / linux / dotfiles / zsh / .zshrc
         # ConfigCopy: Config / linux / dotfiles / copy / zsh / zsh.zshrc.copy
 
-        local_mtime = self.config_file.stat().st_mtime
+        local_mtime = self.config_path.stat().st_mtime
         remote_mtime = remote_conf.stat().st_mtime
 
-        # difflib.context_diff(self.config_file)
+        if local_mtime == remote_mtime:
+            logger.warning("Remote and Local modify time is the same")
+            return
 
-        if local_mtime > remote_mtime:
-            logger.info(
-                f"Local {self.config_filename} file is newer. Syncing it to {self.onedrive_config}."
-            )
-            # make a copy of conf file in remote
-            safe_copy(remote_conf, remote_copy)
-            # replace remote conf with local conf
-            safe_copy(self.config_file, remote_conf)
-        elif local_mtime < remote_mtime:
-            logger.info(
-                f"Remote {self.config_filename} file is newer. Syncing it to {self.config_file}"
-            )
-            # make a copy of conf file in local
-            safe_copy(self.config_file, self.local_copy_path)
-            # replace local conf with remote conf
-            safe_copy(remote_conf, self.config_file)
         else:
             # TODO: implement file conflict algorithm
-            # NOTE: is this even possible that two files have the exact same update time?
-            raise Exception("Remote and Local modify time is the same")
+            # check for md5
+            if self.config_path.is_dir():
+                # self.config_path.iterdir()...
+                pass  # save it for later
+            else:
+                ...
+
+            if local_mtime > remote_mtime:
+                logger.info(
+                    f"Local {self.config_filename} file is newer. Syncing it to {self.onedrive_config}."
+                )
+                # make a copy of conf file in remote
+                safe_copy(remote_conf, remote_copy)
+                # replace remote conf with local conf
+                safe_copy(self.config_path, remote_conf)
+            elif local_mtime < remote_mtime:
+                logger.info(
+                    f"Remote {self.config_filename} file is newer. Syncing it to {self.config_path}"
+                )
+                # make a copy of conf file in local
+                safe_copy(self.config_path, self.local_copy_path)
+                # replace local conf with remote conf
+                safe_copy(remote_conf, self.config_path)
+

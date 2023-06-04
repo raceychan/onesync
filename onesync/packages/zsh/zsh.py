@@ -15,12 +15,12 @@ class ZSH(Configurable):
     def __init__(
         self,
         *,
-        config_file: Path,
+        config_path: Path,
         onedrive_config: Path,
         root_dir: Path = Path.home() / ".zsh",
         as_default: bool = True,
     ):
-        super().__init__(config_file=config_file, onedrive_config=onedrive_config)
+        super().__init__(config_path=config_path, onedrive_config=onedrive_config)
         self.root_dir = root_dir
         self.as_default = as_default
         self._is_installed = False
@@ -30,7 +30,7 @@ class ZSH(Configurable):
         # This should be generalized, config path can be built with pattern
         # TODO: remove, packages should not need to be instantiated
         return cls(
-            config_file=settings.zsh.CONFIG_FILE,
+            config_path=settings.zsh.CONFIG_PATH,
             onedrive_config=settings.zsh.ONEDRIVE_CONFIG,
         )
 

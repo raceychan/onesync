@@ -8,7 +8,7 @@ class SettingBase:
 
 
 class ZSH(SettingBase):
-    CONFIG_FILE: Path = Path().home() / ".zshrc"
+    CONFIG_PATH: Path = Path().home() / ".zshrc"
 
 
 class Settings(SettingBase):

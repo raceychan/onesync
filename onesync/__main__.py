@@ -31,6 +31,7 @@ def install(
 @cli.command()
 def sync(mod_name: str):
     mod = import_configurable(mod_name)
+    # BUG: any module can be imported, instead of configurable ones only
     mod.sync_conf()
 
 
