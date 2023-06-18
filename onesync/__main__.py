@@ -8,6 +8,7 @@ from importer import import_package, import_configurable
 
 cli = Cli()
 # NOTE: avoid too many dependencies, since manually install dependencies before using this installing tool is trivial
+# TODO: when no input start tui, use typer.callback
 
 
 @cli.command(no_args_is_help=True)
