@@ -6,7 +6,7 @@ POETRY_PATH = "~/.local/share/pypoetry"
 
 
 def _download_install_script():
-    if ...:
+    if ...: # if poetry is not already installed
         shell(f"curl -sSL {SCRIPT_URL} | POETRY_HOME={POETRY_PATH} python3 -")
 
 

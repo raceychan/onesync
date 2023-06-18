@@ -107,8 +107,8 @@ def convert_kmp(kmp: str):
         return str
 
 
-def vimrc_to_lua(vimrc: Path):
-    # TODO: should i built a parser tree?
+def vimrc_to_lua(vimrc: Path, to: Path):
+    # TODO: use AST parse tree to analyze?
     with vimrc.open() as f:
         for line in f.readlines():
             if not line:

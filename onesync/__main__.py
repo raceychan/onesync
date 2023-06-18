@@ -2,13 +2,12 @@ from typer import Typer as Cli, Argument, Option
 from typing import Annotated
 from importer import import_package, import_configurable
 
+
 # from onesync.config import settings
 
 # from typing_extensions import Annotated
 
 cli = Cli()
-# NOTE: avoid too many dependencies, since manually install dependencies before using this installing tool is trivial
-# TODO: when no input start tui, use typer.callback
 
 
 @cli.command(no_args_is_help=True)
@@ -35,6 +34,11 @@ def sync(mod_name: str):
     # BUG: any module can be imported, instead of configurable ones only
     mod.sync_conf()
 
+@cli.callback()
+def tui():
+    from tui.tui import Onesync 
+    app = Onesync()
+    app.run()
 
 if __name__ == "__main__":
     cli()
