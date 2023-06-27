@@ -1,11 +1,6 @@
 from typer import Typer as Cli, Argument, Option
 from typing import Annotated
-from importer import import_package, import_configurable
-
-
-# from onesync.config import settings
-
-# from typing_extensions import Annotated
+from .importer import import_package, import_configurable
 
 cli = Cli()
 
@@ -34,11 +29,14 @@ def sync(mod_name: str):
     # BUG: any module can be imported, instead of configurable ones only
     mod.sync_conf()
 
-@cli.callback()
-def tui():
-    from tui.tui import Onesync 
-    app = Onesync()
-    app.run()
+
+# @cli.callback()
+# def tui():
+#     from tui.tui import OneSync
+
+#     app = OneSync()
+#     app.run()
+
 
 if __name__ == "__main__":
     cli()

@@ -1,5 +1,9 @@
-from base import git_clone, shell, Configurable
 from pathlib import Path
+from typing import Type
+
+from ..base import shell, Configurable
+from ..gitools import git_clone
+from ..config import SettingBase
 
 # NOTE: since this is a configurable package, we should make this a Configurable class
 
@@ -12,6 +16,17 @@ def _download_latest_nvim():
 class NeoVim(Configurable):
     pass
 
+    @classmethod
+    def install(cls):
+        _download_latest_nvim()
+
+    @classmethod
+    def from_settings(cls: Type[Configurable], settings: SettingBase) -> Configurable:
+        return cls(
+            config_path=Path.home() / ".config/nvim",
+            onedrive_config=settings.ONEDRIVE_CONFIG,
+        )
+
 
 class NvChad(NeoVim):
     @classmethod
@@ -23,21 +38,23 @@ class LazyVim(NeoVim):
     @classmethod
     def install(cls):
         cls._backup_config()
+
         shell("git clone https://github.com/LazyVim/starter ~/.config/nvim")
         shell("rm -rf ~/.config/nvim/.git")
 
     @classmethod
     def _backup_config(cls):
+        from ..base import Command
+
         cmds = [
             # required
-            "mv ~/.config/nvim ~/.config/nvim.bak",
+            Command("mv ~/.config/nvim ~/.config/nvim.bak"),
             # optional but recommended
-            "mv ~/.local/share/nvim ~/.local/share/nvim.bak",
-            "mv ~/.local/state/nvim ~/.local/state/nvim.bak",
-            "mv ~/.cache/nvim ~/.cache/nvim.bak",
+            Command("mv ~/.local/share/nvim ~/.local/share/nvim.bak"),
+            Command("mv ~/.local/state/nvim ~/.local/state/nvim.bak"),
+            Command("mv ~/.cache/nvim ~/.cache/nvim.bak"),
         ]
-        for cmd in cmds:
-            shell(cmd)
+        shell(*cmds)
 
 
 def install():
@@ -56,7 +73,7 @@ imap <expr><silent><C-h> pumvisible() ? deoplete#close_popup() .
 """
 
 import re
-from typing import Tuple
+from typing import Tuple, Type
 
 vim_lua_mapping: dict = {
     "set": "vim.opt.",

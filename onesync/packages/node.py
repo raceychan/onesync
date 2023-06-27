@@ -1,4 +1,5 @@
-from base import shell, git_clone
+from ..base import shell
+from ..gitools import git_clone
 
 
 def _install_deps():

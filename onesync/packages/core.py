@@ -1,5 +1,5 @@
 # from base import load_toml
-from onesync.installer import apt_install
+from ..installer import apt_install
 
 # TODO: read from dependency.toml
 apt_pkgs = ["zsh", "curl", "ncdu", "git", "iproute2", "python3-pip", "ripgrep", "tmux"]
@@ -30,6 +30,7 @@ apt_packages_optional = [
 
 # NOTE: some of these packages needs extra care
 # exa can't be installed natively in Ubuntu 20
+
 
 def install_core_pkgs():
     """

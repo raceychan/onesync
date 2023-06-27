@@ -1,4 +1,4 @@
-from base import shell
+from ...base import shell
 
 
 SCRIPT_URL = "https://install.python-poetry.org"
@@ -6,7 +6,7 @@ POETRY_PATH = "~/.local/share/pypoetry"
 
 
 def _download_install_script():
-    if ...: # if poetry is not already installed
+    if ...:  # if poetry is not already installed
         shell(f"curl -sSL {SCRIPT_URL} | POETRY_HOME={POETRY_PATH} python3 -")
 
 

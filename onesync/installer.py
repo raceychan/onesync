@@ -1,5 +1,5 @@
-from base import shell
-from config import settings
+from .base import shell
+from .config import settings
 
 
 def continue_after_fail():

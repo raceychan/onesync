@@ -2,7 +2,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Footer, Static, ListItem, ListView, Label
 
 from pathlib import Path
-from importer import get_submodules, as_importable
+from ..importer import get_submodules, as_importable
 
 
 """
@@ -35,7 +35,6 @@ class OneSync(App):
         """
         install the intended app
         """
-        
 
 
 if __name__ == "__main__":

@@ -2,9 +2,10 @@ from pathlib import Path
 from types import ModuleType
 from typing import Type
 from importlib import import_module as importlib_import
-from errors import ModuleNotFoundError
-from config import settings
-from base import Package, Configurable
+
+from .errors import ModuleNotFoundError
+from .config import settings
+from .base import Package, Configurable
 
 
 def as_importable(pypath: str | Path):

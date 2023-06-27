@@ -3,8 +3,8 @@ from pathlib import Path
 
 class SettingBase:
     # below should be resolved from env
-    ONEDRIVE_PATH: Path = Path("/mnt/d/OneDrive")
-    ONEDRIVE_CONFIG: Path = ONEDRIVE_PATH / "Config/linux/dotfiles"
+    ONEDRIVE_ROOT: Path = Path("/mnt/d/OneDrive")
+    ONEDRIVE_CONFIG: Path = ONEDRIVE_ROOT / "Config/linux/dotfiles"
 
 
 class ZSH(SettingBase):

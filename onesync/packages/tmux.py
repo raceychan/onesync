@@ -1,6 +1,6 @@
-from base import shell, safe_copy, Configurable
 from pathlib import Path
 
+from ..base import shell, copy, Configurable
 
 config_file = Path("~/.tmux.conf")
 alter_path = Path("~/.config/tmux/tmux.conf")

@@ -1,4 +1,4 @@
-from base import shell
+from ...base import shell
 
 # class Jupyter(Package):
 #     ...

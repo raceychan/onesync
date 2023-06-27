@@ -1,4 +1,4 @@
-from base import Package
+from ...base import Package
 
 
 class Conda(Package):

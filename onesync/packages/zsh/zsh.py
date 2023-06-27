@@ -1,6 +1,9 @@
-from base import shell, Configurable, git_clone, NONE_SENTINEL, logger
 from pathlib import Path
-from config import Settings
+from dataclasses import dataclass
+
+from ...config import Settings
+from ...base import shell, Configurable, logger
+from ...gitools import git_clone, NONE_SENTINEL
 
 
 def set_as_default():
@@ -11,19 +14,12 @@ def set_as_default():
     shell("chsh -s $(which zsh)")
 
 
+@dataclass
 class ZSH(Configurable):
-    def __init__(
-        self,
-        *,
-        config_path: Path,
-        onedrive_config: Path,
-        root_dir: Path = Path.home() / ".zsh",
-        as_default: bool = True,
-    ):
-        super().__init__(config_path=config_path, onedrive_config=onedrive_config)
-        self.root_dir = root_dir
-        self.as_default = as_default
-        self._is_installed = False
+    _is_installed: bool = False
+
+    root_dir: Path = Path.home() / ".zsh"
+    as_default: bool = True
 
     @classmethod
     def from_settings(cls, settings: Settings):
@@ -36,6 +32,9 @@ class ZSH(Configurable):
 
     @property
     def is_installed(self) -> bool:
+        if shell("which zsh").stdout.strip() == "/usr/bin/zsh":
+            logger.info(f"{self.name} is already installed")
+        self._is_installed = True
         return self._is_installed
 
     @property
@@ -95,14 +94,14 @@ class ZSH(Configurable):
         self.install_synx_highlighting()
 
     def install(self):
+        if self.is_installed:
+            return
         self.install_plugins()
         self.sync_conf()
 
         if self.as_default and not self.is_default_shell:
             # sh_path = Path(__file__).parent / "set_as_default.sh"
             logger.warning(f"{self.name} is not default shell")
-
-        self._is_installed = True
 
     @property
     def is_default_shell(self):
