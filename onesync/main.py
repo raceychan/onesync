@@ -1,6 +1,10 @@
 from typer import Typer as Cli, Argument, Option
 from typing import Annotated
-from onesync.importer import import_package, import_configurable
+from .importer import import_package, import_configurable
+
+
+# from onesync.config import settings
+# from typing_extensions import Annotated
 
 cli = Cli()
 

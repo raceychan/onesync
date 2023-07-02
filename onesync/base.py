@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, CompletedProcess, run
-from typing import Final, Union, Type, Any
+from typing import Type
 from abc import ABC, abstractmethod
 from functools import cached_property
 from dataclasses import dataclass, field
@@ -10,11 +10,12 @@ from typing import ClassVar
 from loguru import logger
 
 # from tomli import loads as load_toml
-from .config import SettingBase
-from .dirhash import md5sum
 
-# from gitools import git_clone
 
+from onesync.config import SettingBase
+from onesync.dirhash import md5sum
+
+# TODO: use onesync.toml to parse
 
 ProjectRoot = Path.cwd()
 
@@ -26,19 +27,39 @@ def _sync_copy_log(filename: str, src: Path, dst: Path):
     logger.info(msg)
 
 
-def copy(src: Path, dst: Path, *, follow_symlinks: bool = True) -> Path:
+def copy(
+    src: Path,
+    dst: Path,
+    *,
+    follow_symlinks: bool = True,
+    symlinks: bool = False,
+    ignore=None,
+    copy_function=shutil.copy2,
+    ignore_dangling_symlinks: bool = False,
+    dirs_exist_ok: bool = False,
+    copy_empty_file: bool = True,
+) -> Path:
     _sync_copy_log(src.name, src, dst)
     if not src.exists():
         raise Exception(f"source file {src.name} does not exist")
 
-    # if src.stat().st_size == 0:
-    #     raise Exception("Empty file bakcup is not allowed")
+    if not copy_empty_file and src.stat().st_size == 0:
+        raise Exception("Empty file bakcup is not allowed")
 
     if not dst.parent.exists():
         dst.parent.mkdir(parents=True)
+
     # dst can be either a file or a dir, either way, the parent would be a dir.
     if src.is_dir():
-        path = shutil.copytree(src, dst)
+        path = shutil.copytree(
+            src,
+            dst,
+            symlinks=symlinks,
+            ignore=ignore,
+            copy_function=copy_function,
+            ignore_dangling_symlinks=ignore_dangling_symlinks,
+            dirs_exist_ok=dirs_exist_ok,
+        )
     else:
         path = shutil.copy(src, dst, follow_symlinks=follow_symlinks)
     return path
@@ -87,11 +108,11 @@ class Command(str):
     def __new__(cls, *args):
         return super().__new__(cls, *args)
 
-    # def __add__(self, other):
-    #     return " && ".join((self, other))
-
     def __and__(self, other):
         return " && ".join((self, other))
+
+
+# dataclass = dataclass(kw_only=True)
 
 
 @dataclass(kw_only=True)
@@ -107,6 +128,10 @@ class Package(ABC):
         factory method to create Package instance using settings
         """
         raise NotImplementedError
+
+    @classmethod
+    def from_yaml(cls: Type["Package"], yaml: Path):
+        ...
 
     def __init_subclass__(cls) -> None:
         cls.registry[cls.__module__] = cls
@@ -126,31 +151,31 @@ class Package(ABC):
         """
         raise NotImplementedError
 
-    @classmethod
-    def register(cls, *args, **kwargs):
-        """
-        A decorator used to register a class as package.
+    # @classmethod
+    # def register(cls, *args, **kwargs):
+    #     """
+    #     A decorator used to register a class as package.
 
-        @Package.register
-        class Tmux:
-            ...
-        """
+    #     @Package.register
+    #     class Tmux:
+    #         ...
+    #     """
 
-        class PackageLike:
-            def __init__(self, pkg_clz: Type[Any]):
-                ...
+    #     class PackageLike:
+    #         def __init__(self, pkg_clz: Type[Any]):
+    #             ...
 
-        def package_cls(pkg_clz: Type[Any]):
-            cls.registry[pkg_clz.__module__] = pkg_clz
-            return pkg_clz
+    #     def package_cls(pkg_clz: Type[Any]):
+    #         cls.registry[pkg_clz.__module__] = pkg_clz
+    #         return pkg_clz
 
-        if not kwargs and len(args) == 1:
-            # case where no args and kwargs were inputed
-            ...
-        else:
-            wrapper = package_cls
+    #     if not kwargs and len(args) == 1:
+    #         # case where no args and kwargs were inputed
+    #         ...
+    #     else:
+    #         wrapper = package_cls
 
-        return package_cls
+    #     return package_cls
 
     @classmethod
     def lazy_init(cls, **kwargs):
@@ -171,14 +196,8 @@ class Package(ABC):
 
 @dataclass
 class Configurable(Package):
-    # registry: dict[str, Type["Configurable"]] = dict()
     config_path: Path
     onedrive_config: Path
-
-    # def __init__(self, *, config_path: Path, onedrive_config: Path):
-    #     super().__init__()
-    # self.config_path = config_path
-    # self.onedrive_config = onedrive_config
 
     @classmethod
     def from_settings(cls: Type[Package], settings: SettingBase) -> "Configurable":
@@ -249,8 +268,8 @@ class Configurable(Package):
         remote_conf = self.onedrive_config / self.config_filename
         remote_copy = self.onedrive_config / self.config_copy
 
-        # ConfigFile: Config / linux / dotfiles / zsh / .zshrc
-        # ConfigCopy: Config / linux / dotfiles / copy / zsh / zsh.zshrc.copy
+        # config_file: Config / linux / dotfiles / zsh / .zshrc
+        # config_copy: Config / linux / dotfiles / copy / zsh / zsh.zshrc.bak
 
         local_mtime = self.config_path.stat().st_mtime
         remote_mtime = remote_conf.stat().st_mtime
@@ -258,6 +277,8 @@ class Configurable(Package):
         if local_mtime == remote_mtime:
             logger.warning("Remote and Local modify time is the same")
             return
+
+        # TODO: rewrite diff function for update_file, update_dir
 
         else:
             # TODO: implement file conflict algorithm
@@ -271,15 +292,19 @@ class Configurable(Package):
                 logger.info(
                     f"Local {self.config_filename} file is newer. Syncing it to {self.onedrive_config}."
                 )
+
                 # make a copy of conf file in remote
                 copy(remote_conf, remote_copy)
+
                 # replace remote conf with local conf
                 copy(self.config_path, remote_conf)
+
             elif local_mtime < remote_mtime:
                 logger.info(
                     f"Remote {self.config_filename} file is newer. Syncing it to {self.config_path}"
                 )
                 # make a copy of conf file in local
                 copy(self.config_path, self.local_copy_path)
+
                 # replace local conf with remote conf
                 copy(remote_conf, self.config_path)

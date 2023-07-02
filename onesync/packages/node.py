@@ -1,5 +1,5 @@
-from ..base import shell
-from ..gitools import git_clone
+from onesync.base import shell
+from onesync.gitools import git_clone
 
 
 def _install_deps():

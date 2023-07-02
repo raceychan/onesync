@@ -1,4 +1,4 @@
-from ...base import shell
+from onesync.base import shell
 
 
 SCRIPT_URL = "https://install.python-poetry.org"

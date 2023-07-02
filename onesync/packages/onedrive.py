@@ -1,4 +1,4 @@
-from ..base import shell, get_sys_number
+from onesync.base import shell, get_sys_number
 
 # step 1: add the opensuse build service repository release key
 # Add the OpenSuSE Build Service repository release key using the following command:

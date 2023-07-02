@@ -1,5 +1,5 @@
-from .base import shell
-from .config import settings
+from onesync.base import shell
+from onesync.config import settings
 
 
 def continue_after_fail():

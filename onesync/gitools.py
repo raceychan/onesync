@@ -2,6 +2,8 @@ from typing import Union, Final
 from pathlib import Path
 from loguru import logger
 
+from onesync.base import shell
+
 
 NONE_SENTINEL: Final = object()
 

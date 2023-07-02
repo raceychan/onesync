@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Type
 
-from ..base import shell, Configurable
-from ..gitools import git_clone
-from ..config import SettingBase
+from onesync.base import shell, Configurable, dataclass
+from onesync.gitools import git_clone
+from onesync.config import SettingBase
 
 # NOTE: since this is a configurable package, we should make this a Configurable class
 
@@ -12,7 +12,7 @@ def _download_latest_nvim():
     shell("sudo add-apt-repository -y ppa:neovim-ppa/stable")
     shell("sudo apt-get update && sudo apt-get install -y neovim")
 
-
+@dataclass
 class NeoVim(Configurable):
     pass
 
@@ -27,7 +27,7 @@ class NeoVim(Configurable):
             onedrive_config=settings.ONEDRIVE_CONFIG,
         )
 
-
+@dataclass
 class NvChad(NeoVim):
     @classmethod
     def install(cls):

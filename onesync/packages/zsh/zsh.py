@@ -1,9 +1,9 @@
 from pathlib import Path
 from dataclasses import dataclass
 
-from ...config import Settings
-from ...base import shell, Configurable, logger
-from ...gitools import git_clone, NONE_SENTINEL
+from onesync.config import Settings
+from onesync.base import shell, Configurable, logger
+from onesync.gitools import git_clone, NONE_SENTINEL
 
 
 def set_as_default():

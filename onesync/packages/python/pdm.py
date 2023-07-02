@@ -1,4 +1,4 @@
-from ...base import shell
+from onesync.base import shell
 
 URL: str = "https://raw.githubusercontent.com/pdm-project/pdm/main/install-pdm.py"
 

@@ -1,4 +1,4 @@
-from ...base import Package
+from onesync.base import Package
 
 
 class Conda(Package):

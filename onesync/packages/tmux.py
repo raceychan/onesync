@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from ..base import shell, copy, Configurable
+from onesync.base import shell, copy, Configurable
 
 config_file = Path("~/.tmux.conf")
 alter_path = Path("~/.config/tmux/tmux.conf")
