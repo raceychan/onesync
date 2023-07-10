@@ -25,17 +25,14 @@ def install(
 
 @cli.command()
 def sync(mod_name: str):
+    # TODO: when sync, compare diff using
+    # git diff [<options>] --no-index [--] <path> <path>
+    # reff: https://stackoverflow.com/questions/16683121/git-diff-between-two-different-files
+    # https://github.com/gitpython-developers/GitPython/tree/main
+
     mod = import_configurable(mod_name)
     # BUG: any module can be imported, instead of configurable ones only
     mod.sync_conf()
-
-
-# @cli.callback()
-# def tui():
-#     from tui.tui import OneSync
-
-#     app = OneSync()
-#     app.run()
 
 
 if __name__ == "__main__":

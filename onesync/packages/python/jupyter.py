@@ -1,7 +1,6 @@
-from onesync.base import shell
+from pathlib import Path
+from onesync.base import shell, Package
 
-# class Jupyter(Package):
-#     ...
 LSP = {
     "pyright": "npm install --save-dev pyright",
     "sql": "npm install --save-dev sql-language-server",
@@ -18,6 +17,8 @@ runtime:
     /home/race/.local/share/jupyter/runtime
 """
 
+class Jupyter(Package):
+    ...
 
 def _install_pkgs():
     packages = [
@@ -38,6 +39,17 @@ def _install_pkgs():
 def _install_lsp():
     for lsp in LSP:
         shell(LSP[lsp])
+
+def config():
+    nb_conf = '''
+    {
+    "CondaKernelSpecManager": {
+    "kernelspec_path": "--user"
+    }
+    }
+    '''
+    jp_conf = Path.home() / ".jupyter" / "jupyter_config.json"
+    jp_conf.write_text(nb_conf)
 
 
 def install():

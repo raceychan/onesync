@@ -6,7 +6,6 @@ class SettingBase:
     ONEDRIVE_ROOT: Path = Path("/mnt/d/OneDrive")
     ONEDRIVE_CONFIG: Path = ONEDRIVE_ROOT / "Config/linux/dotfiles"
 
-
 class ZSH(SettingBase):
     CONFIG_PATH: Path = Path().home() / ".zshrc"
 

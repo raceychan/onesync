@@ -4,9 +4,8 @@ from subprocess import PIPE, CalledProcessError, CompletedProcess, run
 from typing import Type
 from abc import ABC, abstractmethod
 from functools import cached_property
-from dataclasses import dataclass, field
+from dataclasses import dataclass as ori_dataclass, field
 from typing import ClassVar
-
 from loguru import logger
 
 # from tomli import loads as load_toml
@@ -21,6 +20,7 @@ ProjectRoot = Path.cwd()
 
 StrPath = str | Path
 
+dataclass = ori_dataclass(kw_only=True)
 
 def _sync_copy_log(filename: str, src: Path, dst: Path):
     msg = f" Syncing {filename} from {src} to {dst}"
@@ -36,7 +36,7 @@ def copy(
     ignore=None,
     copy_function=shutil.copy2,
     ignore_dangling_symlinks: bool = False,
-    dirs_exist_ok: bool = False,
+    dirs_exist_ok: bool = True,
     copy_empty_file: bool = True,
 ) -> Path:
     _sync_copy_log(src.name, src, dst)
@@ -113,11 +113,28 @@ class Command(str):
 
 
 # dataclass = dataclass(kw_only=True)
+class CloudProvider:
+
+    def create(self):
+        ...
+
+    def get(self):
+        ...
+
+    def put(self):
+        ...
+
+    def delete(self):
+        ...
+
+class OneDrive(CloudProvider):
+    root_dir: Path 
 
 
-@dataclass(kw_only=True)
+@dataclass
 class Package(ABC):
     # TODO: Package and its sublcasses should not require instantiation
+ 
     version: str = "latest"
     registry: ClassVar[dict[str, Type["Package"]]] = dict()
     dependencies: list = field(default_factory=list)

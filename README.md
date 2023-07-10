@@ -26,3 +26,9 @@ onesync would be integrated into the pip system in near future, but for now one 
 git clone git@github.com:raceychan/onesync.git
 python -m onesync
 ```
+
+```python
+class Packge:
+    def install(self):
+        ...
+```

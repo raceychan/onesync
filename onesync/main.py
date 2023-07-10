@@ -27,19 +27,11 @@ def install(
     mod.install()
 
 
-@cli.command()
+@cli.command(no_args_is_help=True)
 def sync(mod_name: str):
     mod = import_configurable(mod_name)
-    # BUG: any module can be imported, instead of configurable ones only
+    # BUG: any module can be import ed, instead of configurable ones only
     mod.sync_conf()
-
-
-# @cli.callback()
-# def tui():
-#     from tui.tui import OneSync
-
-#     app = OneSync()
-#     app.run()
 
 
 if __name__ == "__main__":
