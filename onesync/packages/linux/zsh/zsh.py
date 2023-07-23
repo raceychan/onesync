@@ -26,8 +26,9 @@ class ZSH(Configurable):
         # This should be generalized, config path can be built with pattern
         # TODO: remove, packages should not need to be instantiated
         return cls(
-            config_path=settings.zsh.CONFIG_PATH,
-            onedrive_config=settings.zsh.ONEDRIVE_CONFIG,
+            config_path=settings.zsh.CONFIG_PATH, # type: ignore
+            onedrive_config=settings.zsh.ONEDRIVE_CONFIG, # type: ignore
+
         )
 
     @property

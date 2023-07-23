@@ -34,13 +34,14 @@ def _extract_mapping_info(
     return mode, noremap, map_from, map_to
 
 
-def to_lua_table(_filterd_bool={True, False, None}, **kwargs) -> str:
-    def filter_bool(v):
+def _options(**options) -> str:
+    def filter_bool(v: str) -> str:
+        _filterd_bool={True, False, None}
         if v in _filterd_bool:
             v = str(v).lower()
         return v
 
-    holder = "".join([f" {k} = {filter_bool(v)} , " for k, v in kwargs.items()])
+    holder = "".join([f" {k} = {filter_bool(v)} , " for k, v in options.items()])
     lua_table = f"""{"{"}{holder.removesuffix(', ')}{"}"}"""
     return lua_table
 
@@ -56,7 +57,7 @@ def lua_kmp(kmp: str) -> str:
     """
 
     mode, noremap, map_from, map_to = _extract_mapping_info(kmp)
-    kw = to_lua_table(noremap=noremap)
+    kw = _options(noremap=noremap)
     lua = f'vim.api.nvim_set_keymap("{mode}", "{map_from}", "{map_to}", {kw})'
     return lua
 

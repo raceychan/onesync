@@ -105,16 +105,16 @@ def get_package(mod_name: str) -> Type[Package] | None:
 
 # NOTE: this method shoud be removed, use get_package directly
 # when we solve the Configurable.from_settings issue
-def get_configurable(mod_name: str) -> Type[Configurable] | None:
+def get_configurable(mod_name: str) -> Type[Configurable]:
     cfg_clz = Configurable.registry.get(mod_name)
-    return cfg_clz
+    return cfg_clz # type: ignore
 
 
 def import_package(mod_name: str, package) -> Package | ModuleType:
     mod = ez_import(mod_name, package)
     if pkg_clz := get_package(mod.__name__):
         if issubclass(pkg_clz, Configurable):
-            return pkg_clz.from_settings(settings)
+            return pkg_clz.from_settings(settings) # type: ignore
         else:
             return pkg_clz()
     else:

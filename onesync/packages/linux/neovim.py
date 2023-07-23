@@ -26,7 +26,7 @@ class NeoVim(Configurable):
 
     @classmethod
     def from_settings(cls: Type[Configurable], settings: SettingBase) -> Configurable:
-        return cls(
+        return cls( # type: ignore
             config_path=Path.home() / ".config/nvim",
             onedrive_config=settings.ONEDRIVE_CONFIG,
         )
@@ -53,6 +53,7 @@ class LazyVim(NeoVim):
         cmds = [
             # required
             Command("mv ~/.config/nvim ~/.config/nvim.bak"),
+
             # optional but recommended
             Command("mv ~/.local/share/nvim ~/.local/share/nvim.bak"),
             Command("mv ~/.local/state/nvim ~/.local/state/nvim.bak"),

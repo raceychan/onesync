@@ -8,8 +8,6 @@ from dataclasses import dataclass as ori_dataclass, field
 from typing import ClassVar
 from loguru import logger
 
-# from tomli import loads as load_toml
-
 
 from onesync.config import SettingBase
 from onesync.dirhash import md5sum
@@ -21,6 +19,7 @@ ProjectRoot = Path.cwd()
 StrPath = str | Path
 
 dataclass = ori_dataclass(kw_only=True)
+
 
 def _sync_copy_log(filename: str, src: Path, dst: Path):
     msg = f" Syncing {filename} from {src} to {dst}"
@@ -114,7 +113,6 @@ class Command(str):
 
 # dataclass = dataclass(kw_only=True)
 class CloudProvider:
-
     def create(self):
         ...
 
@@ -127,14 +125,21 @@ class CloudProvider:
     def delete(self):
         ...
 
+
 class OneDrive(CloudProvider):
-    root_dir: Path 
+    root_dir: Path
+
+
+class PackageMeta(type):
+    def __new__(meta: Type["PackageMeta"], cls_name: str, bases, namespaces: dict, configrable: bool, **kwargs):  # type: ignore
+        cls = super().__new__(meta, cls_name, bases, namespaces, **kwargs)
+        return cls
 
 
 @dataclass
 class Package(ABC):
     # TODO: Package and its sublcasses should not require instantiation
- 
+
     version: str = "latest"
     registry: ClassVar[dict[str, Type["Package"]]] = dict()
     dependencies: list = field(default_factory=list)

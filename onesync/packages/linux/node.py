@@ -1,11 +1,11 @@
 from onesync.base import shell
 from onesync.gitools import git_clone
+from onesync.installer import apt_install
 
 
 def _install_deps():
-    shell(
-        "sudo apt -y install curl dirmngr apt-transport-https lsb-release ca-certificates"
-    )
+    deps ="dirmngr apt-transport-https lsb-release ca-certificates".split()
+    apt_install(*deps)
 
 
 def install():

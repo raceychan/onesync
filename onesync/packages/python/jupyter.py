@@ -19,6 +19,8 @@ runtime:
 
 class Jupyter(Package):
     ...
+    # labextensions address
+    config_paht = "{conda_env}/share/jupyter/labextensions"
 
 def _install_pkgs():
     packages = [

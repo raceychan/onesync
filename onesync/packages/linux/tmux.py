@@ -10,10 +10,24 @@ base_conf = """
 set -g default-terminal "xterm-256color"
 set-option -ga terminal-overrides ",xterm-256color:Tc"
 """
+def default_tmux_conf():
+    oh_my_tmux = "~/.config/tmux/oh_my_tmux"
 
+    f"git clone https://github.com/gpakosz/.tmux.git {oh_my_tmux}"
+    f'ln -s {oh_my_tmux} "~/.config/tmux/tmux.conf"'
+    f"cp {oh_my_tmux}/.tmux.conf.local" "~/.config/tmux/tmux.conf.local"
+
+def install_termnator():
+    project_addr = "tmuxinator/tmuxinator/master/completion/tmuxinator.zsh" 
+    local_addr = "/ush/local/shure/zsh/site-functions/_tmuxinator"
+    cmd = f"wget https://raw.githubusercontent.com/{project_addr} -O {local_addr}"
+    shell(cmd)
 
 class Tmux(Configurable):
-    config_file = ...
+    config_file  = Path("~/.config/tmux/tmux.conf")
+
+    def sync_conf(self):
+        ...
 
 
 def _set_up_config():

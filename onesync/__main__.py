@@ -1,8 +1,13 @@
 from typer import Typer as Cli, Argument, Option
 from typing import Annotated
 from onesync.importer import import_package, import_configurable
+from onesync.tui.tui import OneSync
 
 cli = Cli()
+tui = OneSync()
+
+
+import sys
 
 
 @cli.command(no_args_is_help=True)
@@ -36,4 +41,7 @@ def sync(mod_name: str):
 
 
 if __name__ == "__main__":
-    cli()
+    if len((args := sys.argv)) <= 1:
+        tui.run()
+    else:
+        cli()
