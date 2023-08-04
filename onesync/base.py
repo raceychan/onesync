@@ -20,10 +20,21 @@ StrPath = str | Path
 
 dataclass = ori_dataclass(kw_only=True)
 
+SHELL_EXECUTABLE: Path = Path("/usr/bin/zsh")
+
 
 def _sync_copy_log(filename: str, src: Path, dst: Path):
     msg = f" Syncing {filename} from {src} to {dst}"
     logger.info(msg)
+
+def _get_os_version():
+    lsb_release =Path("/etc/lsb-release").read_text().split()
+    map = {}
+    for i in lsb_release:
+        k, *v = i.split("=")
+        map[k.lower()] = v[0] if v else None
+
+    return {map["distrib_id"]:map["distrib_release"]}
 
 
 def copy(
@@ -68,6 +79,8 @@ def shell(
     *args, timeout=60, shell=True, check=True, text=True, bufsize=-1, **kwargs
 ) -> CompletedProcess:
     # NOTE: rewrite needed so that output shows out on screen simutaneously
+    # TODO: auto split multiple lines into multiple shells
+    # TODO: use Popopen directly, run is just a simple wrapper around popopen
     logger.info(f"executing command with arguments: {args}")
     try:
         cp = run(
@@ -301,6 +314,8 @@ class Configurable(Package):
             return
 
         # TODO: rewrite diff function for update_file, update_dir
+        
+        
 
         else:
             # TODO: implement file conflict algorithm
