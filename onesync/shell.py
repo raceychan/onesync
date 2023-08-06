@@ -1,4 +1,3 @@
-import sys
 import asyncio
 from asyncio import streams
 from asyncio.events import get_event_loop, get_running_loop, AbstractEventLoop
@@ -7,14 +6,14 @@ from asyncio.subprocess import Process, SubprocessStreamProtocol
 from asyncio.protocols import BaseProtocol
 from asyncio import SubprocessTransport
 
-from subprocess import CompletedProcess, PIPE, run as sync_run
+from subprocess import CompletedProcess, PIPE
 
 from onesync.logs import logger
 
 EXECUTABLE = "/usr/bin/zsh"
 DEFAULT_STREAM_LIMIT: int = asyncio.streams._DEFAULT_LIMIT  # type: ignore
 
-# there could be a sync version
+# sync version
 # reff: https://stackoverflow.com/questions/803265/getting-realtime-output-using-subprocess
 # You can direct the subprocess output to the streams directly. Simplified example:
 # subprocess.run(['ls'], stderr=sys.stderr, stdout=sys.stdout)
@@ -100,7 +99,9 @@ def shell_maker(
 
 
 async def shell(cmd, **kwargs):
-    shell = shell_maker(**kwargs)
+    # TODO: shell maker seem to be too complicated
+    encoding= "utf-8"
+    shell = shell_maker(encoding=encoding, **kwargs)
     proc = await shell(cmd)
 
     # 0 means success else means failure, would return None before proc.wait
@@ -122,29 +123,28 @@ async def shell(cmd, **kwargs):
     return CompletedProcess(cmd, returncode=return_code, stdout="", stderr="")
 
 
-def sync_shell(cmd):
-    import subprocess
-
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        shell=True,
-        executable=EXECUTABLE,
-        encoding="utf-8",
-        errors="replace",
-    )
-
-    while (line := process.stdout.readline()) != "" or process.poll() is None:
-        if line:
-            print(line.strip(), flush=True)
-
+# def sync_shell(cmd):
+#     import subprocess
+#
+#     process = subprocess.Popen(
+#         cmd,
+#         stdout=subprocess.PIPE,
+#         stderr=subprocess.STDOUT,
+#         shell=True,
+#         executable=EXECUTABLE,
+#         encoding="utf-8",
+#         errors="replace",
+#     )
+#
+#     while (line := process.stdout.readline()) != "" or process.poll() is None:
+#         if line:
+#             print(line.strip(), flush=True)
+#
 
 async def test_long_cmd():
     cmd = """for (( i = 0; i < 3; i++ )); do echo "Current time: $(date +"%T")"; sleep 1; done"""
-    sync_shell(cmd)
     # sync_run(cmd, stdout=sys.stdout, shell=True, executable=EXECUTABLE)
-    # await shell(cmd)
+    await shell(cmd)
 
 
 async def test_err_cmd():
