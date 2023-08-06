@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "onesync"
+version = "0.1.0"
+description = "package config and installing tool"
+authors = ["raceychan <raceychan@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+typer = "^0.9.0"
+loguru = "^0.7.0"
+pytest-asyncio = "^0.21.1"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

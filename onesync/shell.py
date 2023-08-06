@@ -100,8 +100,7 @@ def shell_maker(
 
 async def shell(cmd, **kwargs):
     # TODO: shell maker seem to be too complicated
-    encoding= "utf-8"
-    shell = shell_maker(encoding=encoding, **kwargs)
+    shell = shell_maker(**kwargs)
     proc = await shell(cmd)
 
     # 0 means success else means failure, would return None before proc.wait
@@ -141,24 +140,4 @@ async def shell(cmd, **kwargs):
 #             print(line.strip(), flush=True)
 #
 
-async def test_long_cmd():
-    cmd = """for (( i = 0; i < 3; i++ )); do echo "Current time: $(date +"%T")"; sleep 1; done"""
-    # sync_run(cmd, stdout=sys.stdout, shell=True, executable=EXECUTABLE)
-    await shell(cmd)
 
-
-async def test_err_cmd():
-    cmd = "cat non_existent_file.txt"
-    await shell(cmd)
-
-
-async def test_async_group():
-    await asyncio.gather(test_long_cmd(), test_err_cmd())
-
-
-async def main():
-    await test_long_cmd()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

@@ -1,13 +1,14 @@
 import pytest
 from onesync.shell import shell
 
-
+@pytest.mark.asyncio
 async def test_long_cmd():
     cmd = """for (( i = 0; i < 3; i++ )); do echo "Current time: $(date +"%T")"; sleep 1; done"""
     # sync_run(cmd, stdout=sys.stdout, shell=True, executable=EXECUTABLE)
     await shell(cmd)
 
 
+@pytest.mark.asyncio
 async def test_err_cmd():
     cmd = "cat non_existent_file.txt"
     await shell(cmd)
