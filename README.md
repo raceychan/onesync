@@ -11,6 +11,14 @@ what here are what we plan to do:
 - [ ] Install packages using pre-defined commands in onesync.yaml\
 - [ ] Providing a terminal textual-user-interface(tui)
 
+
+## DEV-Plan
+
+### create a bootstrap that does the following:
+1. download and install miniconda, create a base env
+2. install poetry
+3. using poetry to install onesync dependencies to make onesync is usable
+
 ## Usage
 
 ```bash

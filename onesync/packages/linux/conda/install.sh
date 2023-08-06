@@ -1,37 +1,48 @@
 #!/bin/zsh
 
 download_and_install_miniconda() {
+    # Check if Miniconda is already installed
+    if [ -d "$HOME/miniconda3" ]; then
+        echo "Miniconda is already installed. Skipping installation."
+        return
+    fi
+
     # Update the system and install curl
-    sudo apt-get update && sudo apt-get install curl
+    sudo apt-get update && sudo apt-get install -y curl
 
     # Change to the /tmp directory
     cd /tmp
 
     # Download the Miniconda installer
-    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
 
     # Make the installer executable
-    chmod +x Miniconda3-latest-Linux-x86_64.sh
+    chmod +x miniconda.sh
 
-    # Run the installer
-    ./Miniconda3-latest-Linux-x86_64.sh
+    # Run the installer with silent mode
+    ./miniconda.sh -b -p "$HOME/miniconda3"
 
-    # Source the .zshrc file
-    source ~/.zshrc
+    # Add Miniconda to the PATH environment variable
+    echo 'export PATH="$HOME/miniconda3/bin:$PATH"' >> "$HOME/.bashrc"
+
+    # source the bashrc file
+    source "$HOME/.bashrc"
+
 }
 
 update_and_init_conda() {
+    # Init conda
+    conda init bash
+
     # Update conda
     conda update conda
 
-    # Create a new conda environment with the given arguments
-    conda create "$@"
-
-    # Initialize conda for zsh
-    conda init zsh
+    # create a default env
+    conda create  -n onesync python=3.11
 
     # Activate the new environment
-    conda activate myproject
+    conda activate onesync
+
 }
 
 main() {
