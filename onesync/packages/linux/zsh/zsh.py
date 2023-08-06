@@ -26,14 +26,14 @@ class ZSH(Configurable):
         # This should be generalized, config path can be built with pattern
         # TODO: remove, packages should not need to be instantiated
         return cls(
-            config_path=settings.zsh.CONFIG_PATH, # type: ignore
-            onedrive_config=settings.zsh.ONEDRIVE_CONFIG, # type: ignore
-
+            config_path=settings.zsh.CONFIG_PATH,  # type: ignore
+            onedrive_config=settings.zsh.ONEDRIVE_CONFIG,  # type: ignore
         )
 
     @property
     def is_installed(self) -> bool:
-        if shell("which zsh").stdout.strip() == "/usr/bin/zsh":
+        # if shell("which zsh").stdout.strip() == "/usr/bin/zsh":
+        if Path("/usr/bin/zsh").exists():
             logger.info(f"{self.name} is already installed")
         self._is_installed = True
         return self._is_installed
@@ -94,11 +94,17 @@ class ZSH(Configurable):
         self.install_zsh_autosuggestion()
         self.install_synx_highlighting()
 
+    def install_self(self):
+        shell("sudo apt install zsh")
+
     def install(self):
         if self.is_installed:
             return
         self.install_plugins()
+
         self.sync_conf()
+
+        # TODO: install zsh
 
         if self.as_default and not self.is_default_shell:
             # sh_path = Path(__file__).parent / "set_as_default.sh"

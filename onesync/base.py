@@ -6,11 +6,12 @@ from abc import ABC, abstractmethod
 from functools import cached_property
 from dataclasses import dataclass as ori_dataclass, field
 from typing import ClassVar
-from loguru import logger
 
 
+from onesync.logs import logger
 from onesync.config import SettingBase
 from onesync.dirhash import md5sum
+from onesync.shell import shell
 
 # TODO: use onesync.toml to parse
 
@@ -27,14 +28,15 @@ def _sync_copy_log(filename: str, src: Path, dst: Path):
     msg = f" Syncing {filename} from {src} to {dst}"
     logger.info(msg)
 
+
 def _get_os_version():
-    lsb_release =Path("/etc/lsb-release").read_text().split()
+    lsb_release = Path("/etc/lsb-release").read_text().split()
     map = {}
     for i in lsb_release:
         k, *v = i.split("=")
         map[k.lower()] = v[0] if v else None
 
-    return {map["distrib_id"]:map["distrib_release"]}
+    return {map["distrib_id"]: map["distrib_release"]}
 
 
 def copy(
@@ -73,37 +75,6 @@ def copy(
     else:
         path = shutil.copy(src, dst, follow_symlinks=follow_symlinks)
     return path
-
-
-def shell(
-    *args, timeout=60, shell=True, check=True, text=True, bufsize=-1, **kwargs
-) -> CompletedProcess:
-    # NOTE: rewrite needed so that output shows out on screen simutaneously
-    # TODO: auto split multiple lines into multiple shells
-    # TODO: use Popopen directly, run is just a simple wrapper around popopen
-    logger.info(f"executing command with arguments: {args}")
-    try:
-        cp = run(
-            *args,
-            timeout=timeout,
-            shell=shell,
-            check=check,
-            text=text,
-            stdout=PIPE,
-            stderr=PIPE,
-            bufsize=bufsize,
-            executable="/usr/bin/zsh",
-            **kwargs,
-        )
-    except CalledProcessError as ce:
-        logger.error(f"{ce}")
-        return CompletedProcess(*args, returncode=ce.returncode, stdout="", stderr="")
-    else:
-        if isinstance(cp.stdout, str):
-            logger.success(cp.stdout)
-        else:
-            cp.stdout = ""
-        return cp
 
 
 def get_sys_number() -> str | None:
@@ -185,32 +156,6 @@ class Package(ABC):
         customized installing method of the package
         """
         raise NotImplementedError
-
-    # @classmethod
-    # def register(cls, *args, **kwargs):
-    #     """
-    #     A decorator used to register a class as package.
-
-    #     @Package.register
-    #     class Tmux:
-    #         ...
-    #     """
-
-    #     class PackageLike:
-    #         def __init__(self, pkg_clz: Type[Any]):
-    #             ...
-
-    #     def package_cls(pkg_clz: Type[Any]):
-    #         cls.registry[pkg_clz.__module__] = pkg_clz
-    #         return pkg_clz
-
-    #     if not kwargs and len(args) == 1:
-    #         # case where no args and kwargs were inputed
-    #         ...
-    #     else:
-    #         wrapper = package_cls
-
-    #     return package_cls
 
     @classmethod
     def lazy_init(cls, **kwargs):
@@ -303,19 +248,16 @@ class Configurable(Package):
         remote_conf = self.onedrive_config / self.config_filename
         remote_copy = self.onedrive_config / self.config_copy
 
-        # config_file: Config / linux / dotfiles / zsh / .zshrc
-        # config_copy: Config / linux / dotfiles / copy / zsh / zsh.zshrc.bak
-
         local_mtime = self.config_path.stat().st_mtime
         remote_mtime = remote_conf.stat().st_mtime
 
+        # BUG: when config_path is a dir, Path.stat() would be incorrect
         if local_mtime == remote_mtime:
-            logger.warning("Remote and Local modify time is the same")
+            # monitor_race_condition(self.config_path, remote_conf)
+            logger.warning("Remote and Local modify time is the same, Not action taken")
             return
 
         # TODO: rewrite diff function for update_file, update_dir
-        
-        
 
         else:
             # TODO: implement file conflict algorithm
