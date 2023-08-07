@@ -28,8 +28,8 @@ def install(
 
 
 @cli.command(no_args_is_help=True)
-def sync(mod_name: str):
-    mod = import_configurable(mod_name)
+def sync(mod_name: str, package: str | None = None):
+    mod = import_configurable(mod_name, package)
     # BUG: any module can be import ed, instead of configurable ones only
     mod.sync_conf()
 

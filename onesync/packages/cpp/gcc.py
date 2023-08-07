@@ -1,9 +1,10 @@
 from onesync.base import shell
 
-def _add_repo():
-    shell("sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test")
 
-def install():
-    _add_repo()
-    shell("sudo apt install -y gcc-11")
+async def _add_repo():
+    await shell("sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test")
 
+
+async def install():
+    await _add_repo()
+    await shell("sudo apt install -y gcc-11")

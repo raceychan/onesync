@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from onesync.base import shell, Package
 
@@ -17,12 +18,14 @@ runtime:
     /home/race/.local/share/jupyter/runtime
 """
 
+
 class Jupyter(Package):
     ...
     # labextensions address
     config_paht = "{conda_env}/share/jupyter/labextensions"
 
-def _install_pkgs():
+
+async def _install_pkgs():
     packages = [
         "jupyter",
         "jupyterlab",
@@ -35,25 +38,26 @@ def _install_pkgs():
     ]
 
     txt = f"conda install -c conda-forge {' '.join(pck for pck in packages)}"
-    shell(txt)
+    await shell(txt)
 
 
-def _install_lsp():
-    for lsp in LSP:
-        shell(LSP[lsp])
+async def _install_lsp():
+    tasks = {shell(LSP[lsp] for lsp in LSP)}
+    await asyncio.gather(*tasks)
+
 
 def config():
-    nb_conf = '''
+    nb_conf = """
     {
     "CondaKernelSpecManager": {
     "kernelspec_path": "--user"
     }
     }
-    '''
+    """
     jp_conf = Path.home() / ".jupyter" / "jupyter_config.json"
     jp_conf.write_text(nb_conf)
 
 
-def install():
-    _install_pkgs()
-    _install_lsp()
+async def install():
+    await _install_pkgs()
+    await _install_lsp()

@@ -6,12 +6,12 @@ from onesync.base import shell, Configurable, logger
 from onesync.gitools import git_clone, NONE_SENTINEL
 
 
-def set_as_default():
+async def set_as_default():
     """
     NOTE: this method requires an updated version of cmd
     since it requires user input for password
     """
-    shell("chsh -s $(which zsh)")
+    await shell("chsh -s $(which zsh)")
 
 
 @dataclass
@@ -43,42 +43,46 @@ class ZSH(Configurable):
         return self.root_dir / "zsh-plugins"
 
     # install conda and python environment
-    def install_p10k(self):
+    async def install_p10k(self):
         path = self.plugins_dir / "powerlevel10k"
         if not path.exists():
-            git_clone("https://github.com/romkatv/powerlevel10k.git", path, depth=1)
-            shell(f"""echo 'source {path}/powerlevel10k.zsh-theme' >>~/.zshrc""")
+            await git_clone(
+                "https://github.com/romkatv/powerlevel10k.git", path, depth=1
+            )
+            await shell(f"""echo 'source {path}/powerlevel10k.zsh-theme' >>~/.zshrc""")
 
-    def install_zsh_nord(self):
+    async def install_zsh_nord(self):
         path = self.plugins_dir / "zsh-dircolors-nord"
         if not path.exists():
-            git_clone(
+            await git_clone(
                 "https://github.com/coltondick/zsh-dircolors-nord.git",
                 path,
                 recursive=NONE_SENTINEL,
             )
-            shell(f"source {path}/zsh-dircolors-nord.zsh")
+            await shell(f"source {path}/zsh-dircolors-nord.zsh")
 
-    def install_zsh_autosuggestion(self):
+    async def install_zsh_autosuggestion(self):
         path = self.plugins_dir / "zsh-autosuggestions"
         if not path.exists():
-            git_clone("https://github.com/zsh-users/zsh-autosuggestions", path)
-            shell(f"source {str(path)}/zsh-autosuggestions.zsh")
+            await git_clone("https://github.com/zsh-users/zsh-autosuggestions", path)
+            await shell(f"source {str(path)}/zsh-autosuggestions.zsh")
 
-    def install_synx_highlighting(self):
+    async def install_synx_highlighting(self):
         path = self.plugins_dir / "zsh-syntax-highlighting"
         if not path.exists():
-            git_clone("https://github.com/zsh-users/zsh-syntax-highlighting.git", path)
-            shell(f"source {str(path)}/zsh-syntax-highlighting.zsh")
+            await git_clone(
+                "https://github.com/zsh-users/zsh-syntax-highlighting.git", path
+            )
+            await shell(f"source {str(path)}/zsh-syntax-highlighting.zsh")
 
-    def install_autojump(self):
+    async def install_autojump(self):
         path = self.plugins_dir / "autojump"
         if not path.exists():
-            git_clone("git@github.com:wting/autojump.git", str(path))
+            await git_clone("git@github.com:wting/autojump.git", str(path))
             install_py = path / "install.py"
-            shell(f"cd {str(path)} && python {str(install_py)}")
+            await shell(f"cd {str(path)} && python {str(install_py)}")
 
-    def install_plugins(self):
+    async def install_plugins(self):
         """
         most popular zsh plugins
         https://safjan.com/top-popular-zsh-plugins-on-github-2023/
@@ -88,19 +92,19 @@ class ZSH(Configurable):
         logger.info(f"installing {self.name} plugins")
         self.plugins_dir.mkdir(exist_ok=True, parents=True)
 
-        self.install_p10k()
-        self.install_autojump()
-        self.install_zsh_nord()
-        self.install_zsh_autosuggestion()
-        self.install_synx_highlighting()
+        await self.install_p10k()
+        await self.install_autojump()
+        await self.install_zsh_nord()
+        await self.install_zsh_autosuggestion()
+        await self.install_synx_highlighting()
 
-    def install_self(self):
-        shell("sudo apt install zsh")
+    async def install_self(self):
+        await shell("sudo apt install zsh")
 
-    def install(self):
+    async def install(self):
         if self.is_installed:
             return
-        self.install_plugins()
+        await self.install_plugins()
 
         self.sync_conf()
 
@@ -111,6 +115,6 @@ class ZSH(Configurable):
             logger.warning(f"{self.name} is not default shell")
 
     @property
-    def is_default_shell(self):
-        res = shell("ps -p $$ | awk 'FNR == 2 {print $4}'")
+    async def is_default_shell(self):
+        res = await shell("ps -p $$ | awk 'FNR == 2 {print $4}'")
         return res and res.stdout.strip() == self.name

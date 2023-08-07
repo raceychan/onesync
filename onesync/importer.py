@@ -1,7 +1,9 @@
+import inspect
 from pathlib import Path
 from types import ModuleType
 from typing import Type
 from importlib import import_module as importlib_import
+
 
 from onesync.errors import ModuleNotFoundError
 from onesync.config import settings
@@ -80,6 +82,7 @@ def search_module(mod_name: str, *, package: Path = Path.cwd()) -> Path:
         if as_importable(mod.name) == mod_name:
             return mod
     else:
+        breakpoint()
         raise ModuleNotFoundError
 
 
@@ -89,10 +92,21 @@ def ez_import(mod_name: str, package: str | None = None) -> ModuleType:
     where there is more than one candidate module
     """
     if package:
-        pkg = import_module(search_module(mod_name, package=Path(package)), package)
+        mod = search_module(mod_name, package=Path(package))
+        pkg = import_module(mod, package)
     else:
-        pkg = import_module(search_module(mod_name))
+        package = search_project_root()
+        mod = search_module(mod_name)
+        pkg = import_module(mod, package)
     return pkg
+
+
+def search_project_root(path=Path.cwd()):
+    current_dir_files = [f.name for f in path.rglob("*.py")]
+    if "main.py" in current_dir_files:
+        return str(path)
+    else:
+        return search_project_root(path.parent)
 
 
 def get_package(mod_name: str) -> Type[Package] | None:
@@ -107,24 +121,33 @@ def get_package(mod_name: str) -> Type[Package] | None:
 # when we solve the Configurable.from_settings issue
 def get_configurable(mod_name: str) -> Type[Configurable]:
     cfg_clz = Configurable.registry.get(mod_name)
-    return cfg_clz # type: ignore
+    return cfg_clz  # type: ignore
 
 
 def import_package(mod_name: str, package) -> Package | ModuleType:
     mod = ez_import(mod_name, package)
     if pkg_clz := get_package(mod.__name__):
         if issubclass(pkg_clz, Configurable):
-            return pkg_clz.from_settings(settings) # type: ignore
+            return pkg_clz.from_settings(settings)  # type: ignore
         else:
             return pkg_clz()
     else:
         return mod
 
 
-def import_configurable(mod_name: str) -> Configurable | ModuleType:
+def current_module_name() -> str | None:
+    if not (current_frame := inspect.currentframe()):
+        return None
+    if not (frame := current_frame.f_back):
+        return None
+    module_name = frame.f_globals["__name__"]
+    return module_name
+
+
+def import_configurable(mod_name: str, package) -> Configurable | ModuleType:
     # TODO: packages should not need to be instantilized,
     # otherwise it would be painful to write more packages
-    mod = ez_import(mod_name)
+    mod = ez_import(mod_name, package)
     if pkg_clz := get_configurable(mod.__name__):
         return pkg_clz.from_settings(settings)  # type: ignore
     else:

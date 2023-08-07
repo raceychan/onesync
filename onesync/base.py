@@ -77,8 +77,8 @@ def copy(
     return path
 
 
-def get_sys_number() -> str | None:
-    res = shell("lsb_release -a 2>/dev/null | grep 'Release:' | awk '{print $2}'")
+async def get_sys_number() -> str | None:
+    res = await shell("lsb_release -a 2>/dev/null | grep 'Release:' | awk '{print $2}'")
     if res and res.stdout:
         sys_num = res.stdout.strip()
     else:
@@ -151,7 +151,7 @@ class Package(ABC):
         return self.__class__.__doc__
 
     @abstractmethod
-    def install(self):
+    async def install(self):
         """
         customized installing method of the package
         """
@@ -161,17 +161,17 @@ class Package(ABC):
     def lazy_init(cls, **kwargs):
         return cls(**kwargs)
 
-    def dependency_check(self):
+    async def dependency_check(self):
         if not self.dependencies:
             return
         for deps in self.dependencies:
             if not isinstance(deps, Package):
                 raise Exception
-            deps.build()
+            await deps.build()
 
-    def build(self):
-        self.dependency_check()
-        self.install()
+    async def build(self):
+        await self.dependency_check()
+        await self.install()
 
 
 @dataclass

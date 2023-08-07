@@ -1,4 +1,5 @@
 from onesync.base import shell
 
-def install():
-    shell("pip install pipx")
+
+async def install():
+    await shell("pip install pipx")

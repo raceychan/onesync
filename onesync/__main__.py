@@ -1,3 +1,4 @@
+import asyncio
 from typer import Typer as Cli, Argument, Option
 from typing import Annotated
 from onesync.importer import import_package, import_configurable
@@ -25,7 +26,7 @@ def install(
     pass
     """
     mod = import_package(mod_name, package)
-    mod.install()
+    asyncio.run(mod.install())
 
 
 @cli.command()
@@ -37,7 +38,7 @@ def sync(mod_name: str):
 
     mod = import_configurable(mod_name)
     # BUG: any module can be imported, instead of configurable ones only
-    mod.sync_conf()
+    asyncio.run(mod.sync_conf())
 
 
 if __name__ == "__main__":

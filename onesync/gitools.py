@@ -33,11 +33,11 @@ def _build_git_command(
     return git
 
 
-def git_clone(url: str, path: str | Path, https: bool = True, **kwargs):
+async def git_clone(url: str, path: str | Path, https: bool = True, **kwargs):
     if Path(path).exists():
         logger.warning("target path already exists")
         return
 
     git = _build_git_command(url, path, https, **kwargs)
-    shell(git)
+    await shell(git)
     return path
