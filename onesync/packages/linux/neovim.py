@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from typing import Type
 
@@ -63,7 +64,14 @@ class LazyVim(NeoVim):
             Command("mv ~/.local/state/nvim ~/.local/state/nvim.bak"),
             Command("mv ~/.cache/nvim ~/.cache/nvim.bak"),
         ]
-        await shell(*cmds)
+        tasks = set()
+        for cmd in cmds:
+
+            tasks.add(asyncio.create_task(shell(str(cmd))))
+
+        
+        await asyncio.gather(*tasks)
+        # await shell(*cmds)
 
 
 async def install():

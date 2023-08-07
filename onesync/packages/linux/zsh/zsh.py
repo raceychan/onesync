@@ -32,10 +32,9 @@ class ZSH(Configurable):
 
     @property
     def is_installed(self) -> bool:
-        # if shell("which zsh").stdout.strip() == "/usr/bin/zsh":
         if Path("/usr/bin/zsh").exists():
             logger.info(f"{self.name} is already installed")
-        self._is_installed = True
+            self._is_installed = True
         return self._is_installed
 
     @property
@@ -99,16 +98,18 @@ class ZSH(Configurable):
         await self.install_synx_highlighting()
 
     async def install_self(self):
-        await shell("sudo apt install zsh")
+        # apt.install("zsh", y)
+        await shell("sudo apt install -y zsh")
 
     async def install(self):
         if self.is_installed:
+            logger.info("zsh is already installed in current system")
             return
+
         await self.install_plugins()
+        await self.install_self()
 
         self.sync_conf()
-
-        # TODO: install zsh
 
         if self.as_default and not self.is_default_shell:
             # sh_path = Path(__file__).parent / "set_as_default.sh"

@@ -1,5 +1,5 @@
 import sys
-from loguru import logger
+from loguru import logger as preconfig_logger
 from loguru._handler import Message
 
 # from datetime import datetime
@@ -88,9 +88,10 @@ def shell_sink(message: Message):
     print(json_record)
 
 
-logger.remove(0)
 
-logger.add(
+preconfig_logger.remove(0)
+
+preconfig_logger.add(
     sys.stderr,
     format="<green>{time:MM-DD HH:mm:ss}</green> | "
     # "<R><k>{process.name}-{process.id}</k></R> | "
@@ -98,4 +99,5 @@ logger.add(
     "<level>{message}</level>",
 )
 
+logger = preconfig_logger
 # logger.add(sink=shell_sink, colorize=True, enqueue=True)  # type: ignore

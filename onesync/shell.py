@@ -7,6 +7,7 @@ from asyncio.protocols import BaseProtocol
 from asyncio import SubprocessTransport
 
 from subprocess import CompletedProcess, PIPE
+from pathlib import Path
 
 from onesync.logs import logger
 
@@ -17,6 +18,24 @@ DEFAULT_STREAM_LIMIT: int = asyncio.streams._DEFAULT_LIMIT  # type: ignore
 # reff: https://stackoverflow.com/questions/803265/getting-realtime-output-using-subprocess
 # You can direct the subprocess output to the streams directly. Simplified example:
 # subprocess.run(['ls'], stderr=sys.stderr, stdout=sys.stdout)
+
+# def sync_shell(cmd):
+#     import subprocess
+#
+#     process = subprocess.Popen(
+#         cmd,
+#         stdout=subprocess.PIPE,
+#         stderr=subprocess.STDOUT,
+#         shell=True,
+#         executable=EXECUTABLE,
+#         encoding="utf-8",
+#         errors="replace",
+#     )
+#
+#     while (line := process.stdout.readline()) != "" or process.poll() is None:
+#         if line:
+#             print(line.strip(), flush=True)
+#
 
 
 # TODO: auto split multiple lines into multiple shells
@@ -100,8 +119,14 @@ def shell_maker(
 
 async def shell(cmd, **kwargs):
     # TODO: shell maker seem to be too complicated
-    shell = shell_maker(**kwargs)
-    proc = await shell(cmd)
+
+    # quick fixcc
+
+    executable = EXECUTABLE if Path("/usr/bin/zsh").exists() else None
+    kwargs["executable"] = executable
+
+    local_shell = shell_maker(**kwargs)
+    proc = await local_shell(cmd)
 
     # 0 means success else means failure, would return None before proc.wait
     if proc.returncode:
@@ -121,21 +146,3 @@ async def shell(cmd, **kwargs):
     return_code = proc.returncode or 1
     return CompletedProcess(cmd, returncode=return_code, stdout="", stderr="")
 
-
-# def sync_shell(cmd):
-#     import subprocess
-#
-#     process = subprocess.Popen(
-#         cmd,
-#         stdout=subprocess.PIPE,
-#         stderr=subprocess.STDOUT,
-#         shell=True,
-#         executable=EXECUTABLE,
-#         encoding="utf-8",
-#         errors="replace",
-#     )
-#
-#     while (line := process.stdout.readline()) != "" or process.poll() is None:
-#         if line:
-#             print(line.strip(), flush=True)
-#
