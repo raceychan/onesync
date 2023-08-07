@@ -5,6 +5,7 @@ from typing import Type
 from onesync.base import shell, Configurable, dataclass
 from onesync.gitools import git_clone
 from onesync.config import SettingBase
+from onesync.logs import logger
 
 
 # NOTE: since this is a configurable package, we should make this a Configurable class
@@ -23,11 +24,11 @@ async def _download_latest_nvim():
 
 @dataclass
 class NeoVim(Configurable):
-    pass
 
     @classmethod
     async def install(cls):
         await _download_latest_nvim()
+        await cls._install()
 
     @classmethod
     def from_settings(cls: Type[Configurable], settings: SettingBase) -> Configurable:
@@ -40,15 +41,14 @@ class NeoVim(Configurable):
 @dataclass
 class NvChad(NeoVim):
     @classmethod
-    async def install(cls):
+    async def _install(cls):
         await git_clone("https://github.com/NvChad/NvChad", "~/.config/nvim", depth=1)
 
 
 class LazyVim(NeoVim):
     @classmethod
-    async def install(cls):
+    async def _install(cls):
         await cls._backup_config()
-
         await shell("git clone https://github.com/LazyVim/starter ~/.config/nvim")
         await shell("rm -rf ~/.config/nvim/.git")
 
@@ -75,5 +75,5 @@ class LazyVim(NeoVim):
 
 
 async def install():
-    # _download_latest_nvim()
+    await _download_latest_nvim()
     await LazyVim.install()
