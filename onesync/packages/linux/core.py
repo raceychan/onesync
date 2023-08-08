@@ -32,7 +32,7 @@ apt_packages_optional = [
 # exa can't be installed natively in Ubuntu 20
 
 
-def install_core_pkgs():
+def install():
     """
     # TODO: install all sub-packages of zsh within a same function. better abstraction needed
 
