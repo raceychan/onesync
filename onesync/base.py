@@ -95,23 +95,7 @@ class Command(str):
         return " && ".join((self, other))
 
 
-# dataclass = dataclass(kw_only=True)
-class CloudProvider:
-    def create(self):
-        ...
 
-    def get(self):
-        ...
-
-    def put(self):
-        ...
-
-    def delete(self):
-        ...
-
-
-class OneDrive(CloudProvider):
-    root_dir: Path
 
 
 class PackageMeta(type):

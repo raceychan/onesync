@@ -24,7 +24,6 @@ async def _download_latest_nvim():
 
 @dataclass
 class NeoVim(Configurable):
-
     @classmethod
     async def install(cls):
         await _download_latest_nvim()
@@ -64,14 +63,10 @@ class LazyVim(NeoVim):
             Command("mv ~/.local/state/nvim ~/.local/state/nvim.bak"),
             Command("mv ~/.cache/nvim ~/.cache/nvim.bak"),
         ]
-        tasks = set()
+
+
         for cmd in cmds:
-
-            tasks.add(asyncio.create_task(shell(str(cmd))))
-
-        
-        await asyncio.gather(*tasks)
-        # await shell(*cmds)
+            await shell(str(cmd))
 
 
 async def install():

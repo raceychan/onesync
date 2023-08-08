@@ -114,6 +114,7 @@ class ZSH(Configurable):
         if self.as_default and not self.is_default_shell:
             # sh_path = Path(__file__).parent / "set_as_default.sh"
             logger.warning(f"{self.name} is not default shell")
+            await set_as_default()
 
     @property
     async def is_default_shell(self):
