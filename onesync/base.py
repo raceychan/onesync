@@ -95,9 +95,6 @@ class Command(str):
         return " && ".join((self, other))
 
 
-
-
-
 class PackageMeta(type):
     def __new__(meta: Type["PackageMeta"], cls_name: str, bases, namespaces: dict, configrable: bool, **kwargs):  # type: ignore
         cls = super().__new__(meta, cls_name, bases, namespaces, **kwargs)
@@ -111,6 +108,7 @@ class Package(ABC):
     version: str = "latest"
     registry: ClassVar[dict[str, Type["Package"]]] = dict()
     dependencies: list = field(default_factory=list)
+    platform: str = "linux"
 
     @classmethod
     def from_settings(cls: Type["Package"], settings: SettingBase):

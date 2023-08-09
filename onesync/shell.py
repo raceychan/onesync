@@ -5,11 +5,14 @@ from asyncio.unix_events import _UnixSelectorEventLoop
 from asyncio.subprocess import Process, SubprocessStreamProtocol
 from asyncio.protocols import BaseProtocol
 from asyncio import SubprocessTransport
+from typing import Unpack
 
 from subprocess import CompletedProcess, PIPE
 from pathlib import Path
 
 from onesync.logs import logger
+from onesync.interface import PopenPosixTypedDict
+
 
 EXECUTABLE = "/usr/bin/zsh"
 DEFAULT_STREAM_LIMIT: int = asyncio.streams._DEFAULT_LIMIT  # type: ignore
@@ -50,16 +53,16 @@ def get_unix_running_loop() -> _UnixSelectorEventLoop:
 
 class StreamProcess(Process):
     _transport: SubprocessTransport
-    _protocol: BaseProtocol
+    _protocol: asyncio.subprocess.SubprocessStreamProtocol
     _loop: AbstractEventLoop
 
-    stdout: streams.StreamReader
-    stderr: streams.StreamReader
-    stdin: streams.StreamReader
-    pid: int
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        transport: SubprocessTransport,
+        protocol: asyncio.subprocess.SubprocessStreamProtocol,
+        loop: AbstractEventLoop,
+    ):
+        super().__init__(transport, protocol, loop)
 
     async def display_info(self):
         # TODO: logger should not display shell:display_info:46
@@ -82,6 +85,42 @@ class StreamProcess(Process):
 
         await asyncio.gather(*coros)
 
+    @classmethod
+    async def construct(
+        cls,
+        stream_limit: int = DEFAULT_STREAM_LIMIT,
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        universal_newlines=False,
+        shell=True,
+        bufsize=0,
+        encoding=None,
+        errors=None,
+        text=None,
+        **popendict: Unpack[PopenPosixTypedDict],
+    ):
+        loop = get_event_loop()
+
+        protocol_factory = lambda: SubprocessStreamProtocol(
+            limit=stream_limit, loop=loop
+        )
+
+        # NOTE: cmd gets excuted in this line
+        transport, protocol = await loop.subprocess_shell(
+            protocol_factory,
+            cmd,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+            shell=shell,
+            executable=executable,
+            **popendict,
+        )
+
+        proc = cls(transport=transport, protocol=protocol, loop=loop)
+        return proc
+
 
 def shell_maker(
     stdin=PIPE,
@@ -91,7 +130,7 @@ def shell_maker(
     executable=EXECUTABLE,
     *,
     timeout=None,
-    **kwargs,
+    **kwargs: Unpack[PopenPosixTypedDict],
 ):
     limit = DEFAULT_STREAM_LIMIT
 
@@ -146,3 +185,26 @@ async def shell(cmd, **kwargs):
     return_code = proc.returncode or 1
     return CompletedProcess(cmd, returncode=return_code, stdout="", stderr="")
 
+
+class Shell:
+    executeable: Path = ...
+
+    def run(self, cmd):
+        ...
+
+    @classmethod
+    async def construct(cls):
+        ...
+
+
+class Zshell(Shell):
+    executable: Path = Path("/usr/bin/zsh")
+    stream_limit: int = DEFAULT_STREAM_LIMIT
+
+    def __init__(self, loop, process: StreamProcess):
+        self.loop = loop
+        self.process = process
+
+    @classmethod
+    async def construct(cls):
+        return proc

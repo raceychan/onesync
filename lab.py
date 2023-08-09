@@ -15,23 +15,23 @@ class APT(PackgeTool):
 
 # apt = APT(shell)
 # apt.install("zsh==1.3.1")
-class LinuxDistrio:
-    package_tool: "APT"
+# class LinuxDistrio:
+#     package_tool: "APT"
 
 
-class Ubuntu(LinuxDistrio):
-    package_tool: "APT"
+# class Ubuntu(LinuxDistrio):
+#     package_tool: "APT"
 
 
-class Shell:
+class Platform:
     ...
 
 
-class UnixShell(Shell):
-    distrio: LinuxDistrio
+class Unix(Platform):
+    distrio: ...
 
     async def install(self, package):
-        await self.distrio.package_tool.install(pacakge)
+        ...
 
 
 # shell = make_shell() # UnixShell(Ubuntu)

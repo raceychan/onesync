@@ -35,3 +35,59 @@ async def install_pkgs(pkgs: list[str]):
             print("Failed to install optional packages")
     else:
         print("Failed to install packages")
+
+
+class PackageTool:
+    def install(self, package_name):
+        pass
+
+    def remove(self, package_name):
+        pass
+
+    # Add other package tool methods here
+
+
+class APT(PackageTool):
+    def install(self, package_name):
+        print(f"Installing {package_name} using APT")
+
+    def remove(self, package_name):
+        print(f"Removing {package_name} using APT")
+
+    # Implement other APT-specific methods here
+
+
+class Platform:
+    def __init__(self, package_tool):
+        self.package_tool = package_tool
+
+    def install_package(self, package_name):
+        self.package_tool.install(package_name)
+
+    def remove_package(self, package_name):
+        self.package_tool.remove(package_name)
+
+    # Add other platform methods here
+
+
+class Unix(Platform):
+    def __init__(self, package_tool: PackageTool):
+        super().__init__(package_tool)
+
+    # Implement Unix-specific methods here
+
+
+class Linux(Unix):
+    def __init__(self, package_tool: PackageTool):
+        super().__init__(package_tool)
+
+    # Implement Linux-specific methods here
+
+
+class Ubuntu(Linux):
+    package_tool: APT
+
+    def __init__(self, package_tool: APT):
+        super().__init__(package_tool)
+
+
