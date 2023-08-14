@@ -1,5 +1,4 @@
 import asyncio
-from asyncio import streams
 from asyncio.events import get_event_loop, get_running_loop, AbstractEventLoop
 from asyncio.unix_events import _UnixSelectorEventLoop
 from asyncio.subprocess import Process, SubprocessStreamProtocol
@@ -40,10 +39,51 @@ DEFAULT_STREAM_LIMIT: int = asyncio.streams._DEFAULT_LIMIT  # type: ignore
 #             print(line.strip(), flush=True)
 #
 
+class Command(str):
+    # default to linux
+    def __new__(cls, string):
+        return super().__new__(cls, string.strip())
+
+    def __repr__(self):
+        return f"Command('{self}')"
+
+    def andif(self, other):
+        new = self + " && " + other
+        return Command(new)
+
+class CommandGroup:
+    def __init__(self, commands: str, keep_andif: bool = True):
+        _cmds = self.parse_commands(commands, keep_andif)
+        self._cmds = _cmds
+
+    def __iter__(self):
+        for cmd in self._cmds:
+            yield cmd
+
+    def __str__(self):
+        return "\n".join(self)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def parse_commands(self, commands: str, keep_andif: bool):
+        if not commands:
+            raise ValueError("empty command")
+
+        if keep_andif:
+            _cmds = tuple(Command(cmd) for cmd in commands.split('\n') if cmd)
+        else:
+            _cmds = tuple(Command(cmd) for line in commands.split('\n') for cmd in line.split('&&') if cmd)
+        return _cmds
+
+    @property
+    def commands(self):
+        return self._cmds
+    
+    def andif(self):
+        return " && ".join(self)
 
 # TODO: auto split multiple lines into multiple shells
-def smart_cmd(cmd):
-    return cmd
 
 
 def get_unix_running_loop() -> _UnixSelectorEventLoop:
@@ -72,6 +112,7 @@ class StreamProcess(Process):
             logger.info(line.decode())
 
     async def display_error(self):
+
         async for line in self.stderr:
             logger.error(line.decode())
 
@@ -187,7 +228,7 @@ async def shell(cmd, **kwargs):
 
 
 class Shell:
-    executeable: Path = ...
+    executeable: Path = Path("/usr/bin/zsh")
 
     def run(self, cmd):
         ...
@@ -199,12 +240,7 @@ class Shell:
 
 class Zshell(Shell):
     executable: Path = Path("/usr/bin/zsh")
-    stream_limit: int = DEFAULT_STREAM_LIMIT
 
-    def __init__(self, loop, process: StreamProcess):
+    def __init__(self, loop: AbstractEventLoop, process: StreamProcess):
         self.loop = loop
         self.process = process
-
-    @classmethod
-    async def construct(cls):
-        return proc

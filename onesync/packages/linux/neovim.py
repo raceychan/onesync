@@ -1,11 +1,10 @@
-import asyncio
 from pathlib import Path
 from typing import Type
 
 from onesync.base import shell, Configurable, dataclass
 from onesync.gitools import git_clone
 from onesync.config import SettingBase
-from onesync.logs import logger
+
 
 
 # NOTE: since this is a configurable package, we should make this a Configurable class
@@ -53,7 +52,7 @@ class LazyVim(NeoVim):
 
     @classmethod
     async def _backup_config(cls):
-        from onesync.base import Command
+        from onesync.shell import Command
 
         cmds = [
             # required

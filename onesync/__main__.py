@@ -48,6 +48,7 @@ def sync(mod_name: str, package=None):
     asyncio.run(mod.sync_conf())
 
 
+
 if __name__ == "__main__":
     if len((args := sys.argv)) <= 1:
         tui.run()

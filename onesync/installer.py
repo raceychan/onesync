@@ -47,12 +47,7 @@ class PackageTool:
     # Add other package tool methods here
 
 
-class APT(PackageTool):
-    def install(self, package_name):
-        print(f"Installing {package_name} using APT")
 
-    def remove(self, package_name):
-        print(f"Removing {package_name} using APT")
 
     # Implement other APT-specific methods here
 
@@ -85,9 +80,26 @@ class Linux(Unix):
 
 
 class Ubuntu(Linux):
-    package_tool: APT
+    package_tool: "APT"
 
-    def __init__(self, package_tool: APT):
+    def __init__(self, package_tool: "APT"):
         super().__init__(package_tool)
 
 
+class APT(PackageTool):
+    prefix: str = "apt-get"
+
+    def __init__(self, root: bool=True):
+        self.root = root
+
+    def run_as_root(self, cmd: str):
+        return f"sudo {cmd}" if self.root else cmd
+
+    async def update(self):
+        return self.run_as_root("apt-get update")
+
+    async def install(self, package):
+        return self.run_as_root(f"{self.prefix} install -y {package}")
+
+    def remove(self, package):
+        return self.run_as_root(f"{self.prefix} remove {package}")
