@@ -13,24 +13,27 @@ set_proxy(){
   export HTTP_PROXY="${PROXY_HTTP}"
  
   export https_proxy="${PROXY_HTTP}"
-  export HTTPS_proxy="${PROXY_HTTP}"
+  export HTTPS_PROXY="${PROXY_HTTP}"
  
-  export ALL_PROXY="${PROXY_SOCKS5}"
   export all_proxy=${PROXY_SOCKS5}
+  export ALL_PROXY="${PROXY_SOCKS5}"
  
   git config --global http.https://github.com.proxy ${PROXY_HTTP}
   git config --global https.https://github.com.proxy ${PROXY_HTTP}
  
-  echo "Proxy has been opened."
+  echo "Proxy has been opened. proxy address: ${PROXY_HTTP}"
 }
  
 unset_proxy(){
   unset http_proxy
   unset HTTP_PROXY
+
   unset https_proxy
   unset HTTPS_PROXY
-  unset ALL_PROXY
+
   unset all_proxy
+  unset ALL_PROXY
+
   git config --global --unset http.https://github.com.proxy
   git config --global --unset https.https://github.com.proxy
  
@@ -49,17 +52,15 @@ test_setting(){
   fi
 }
  
-# if [ "$1" = "set" ]
-# then
-#   set_proxy
-#  
-# elif [ "$1" = "unset" ]
-# then
-#   unset_proxy
-#  
-# elif [ "$1" = "test" ]
-# then
-#   test_setting
-# else
-#   echo "Unsupported arguments."
-# fi
+if [ "$1" = "set" ]
+then
+  set_proxy
+elif [ "$1" = "unset" ]
+then
+  unset_proxy
+elif [ "$1" = "test" ]
+then
+  test_setting
+else
+  echo "Unsupported arguments."
+fi

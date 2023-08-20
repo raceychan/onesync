@@ -56,3 +56,5 @@ function main(){
 
     echo "finish settings up "
 }
+
+main

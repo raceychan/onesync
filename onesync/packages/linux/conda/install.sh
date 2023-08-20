@@ -38,7 +38,11 @@ update_and_init_conda() {
     conda update conda
 
     # create a default env
-    conda create  -n onesync python=3.11
+    conda create -n -y onesync python=3.11
+
+    # init in current shell
+    local shell=echo $0
+    conda init $shell
 
     # Activate the new environment
     conda activate onesync
