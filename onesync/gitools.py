@@ -41,3 +41,32 @@ async def git_clone(url: str, path: str | Path, https: bool = True, **kwargs):
     git = _build_git_command(url, path, https, **kwargs)
     await shell(git)
     return path
+
+
+class Git:
+    def __init__(self, source="github.com"):
+        self.source = source
+        self.ssh_url = f"git@{source}"
+        self.https_url = f"https://{source}"
+
+    def command(self, cmd, **kwargs):
+        extra = ""
+        if kwargs:
+            for k, v in kwargs.items():
+                if v is not NONE_SENTINEL:
+                    phrase = f" --{k}={v}"
+                else:
+                    phrase = f" --{k}"
+                extra += phrase
+
+        return f"{cmd}{extra}"
+
+    def clone(
+        self, target: str, local: Union[str, Path], https: bool = True, **kwargs
+    ) -> str:
+        if https:
+            target = _ssh_to_https(target)
+
+        cmd = self.command("git clone", **kwargs)
+        git = f"{cmd} {target} {str(local)}"
+        return git

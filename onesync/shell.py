@@ -1,19 +1,20 @@
+import sys
+import collections
 import asyncio
-from asyncio.events import get_event_loop, get_running_loop, AbstractEventLoop
-from asyncio.unix_events import _UnixSelectorEventLoop
-from asyncio.subprocess import Process, SubprocessStreamProtocol
-from asyncio.protocols import BaseProtocol
-from asyncio import SubprocessTransport
-from typing import Unpack
 
-from subprocess import CompletedProcess, PIPE
 from pathlib import Path
 
-from onesync.logs import logger
-from onesync.interface import PopenPosixTypedDict
+from asyncio.events import get_running_loop, AbstractEventLoop
+from asyncio.unix_events import _UnixSelectorEventLoop
+from asyncio.transports import SubprocessTransport
+from asyncio.subprocess import SubprocessStreamProtocol
 
 
-EXECUTABLE = "/usr/bin/zsh"
+from typing import Iterable, AsyncIterable, Literal
+
+
+from onesync.interface import Pipeline, PopenPosixTypedDict
+
 DEFAULT_STREAM_LIMIT: int = asyncio.streams._DEFAULT_LIMIT  # type: ignore
 
 # sync version
@@ -21,23 +22,6 @@ DEFAULT_STREAM_LIMIT: int = asyncio.streams._DEFAULT_LIMIT  # type: ignore
 # You can direct the subprocess output to the streams directly. Simplified example:
 # subprocess.run(['ls'], stderr=sys.stderr, stdout=sys.stdout)
 
-# def sync_shell(cmd):
-#     import subprocess
-#
-#     process = subprocess.Popen(
-#         cmd,
-#         stdout=subprocess.PIPE,
-#         stderr=subprocess.STDOUT,
-#         shell=True,
-#         executable=EXECUTABLE,
-#         encoding="utf-8",
-#         errors="replace",
-#     )
-#
-#     while (line := process.stdout.readline()) != "" or process.poll() is None:
-#         if line:
-#             print(line.strip(), flush=True)
-#
 
 class Command(str):
     # default to linux
@@ -50,6 +34,7 @@ class Command(str):
     def andif(self, other):
         new = self + " && " + other
         return Command(new)
+
 
 class CommandGroup:
     def __init__(self, commands: str, keep_andif: bool = True):
@@ -71,17 +56,23 @@ class CommandGroup:
             raise ValueError("empty command")
 
         if keep_andif:
-            _cmds = tuple(Command(cmd) for cmd in commands.split('\n') if cmd)
+            _cmds = tuple(Command(cmd) for cmd in commands.split("\n") if cmd)
         else:
-            _cmds = tuple(Command(cmd) for line in commands.split('\n') for cmd in line.split('&&') if cmd)
+            _cmds = tuple(
+                Command(cmd)
+                for line in commands.split("\n")
+                for cmd in line.split("&&")
+                if cmd
+            )
         return _cmds
 
     @property
     def commands(self):
         return self._cmds
-    
+
     def andif(self):
         return " && ".join(self)
+
 
 # TODO: auto split multiple lines into multiple shells
 
@@ -91,156 +82,221 @@ def get_unix_running_loop() -> _UnixSelectorEventLoop:
     return loop  # type: ignore
 
 
-class StreamProcess(Process):
-    _transport: SubprocessTransport
-    _protocol: asyncio.subprocess.SubprocessStreamProtocol
-    _loop: AbstractEventLoop
+class _UnsetParams:
+    ...
 
+
+UnsetParams = _UnsetParams()
+
+
+class Screen:
+    def __init__(self, max_lines: int = 2**16, text: bool = False):
+        self._queue = collections.deque(maxlen=max_lines)
+        self._text = text
+        self._cursor = 0
+
+    async def load(self, lines: Iterable | AsyncIterable):
+        match lines:
+            case collections.abc.Iterable():  # type: ignore
+                for l in lines:
+                    self.append(l)
+            case collections.abc.AsyncIterable():  # type: ignore
+                async for l in lines:
+                    self.append(l)
+            case _:
+                raise TypeError("Expected Iterable or AsyncIterable")
+
+    def append(self, line: bytes):
+        self._queue.append(line)
+        sys.stdout.write(line.decode())
+
+    def __str__(self):
+        return b"".join(self._queue).decode()
+
+    def __repr__(self):
+        return str(self)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            data = self._queue[self._cursor]
+        except IndexError:
+            raise StopIteration
+        self._cursor += 1
+        return data
+
+
+class PosixProcess:
     def __init__(
         self,
-        transport: SubprocessTransport,
-        protocol: asyncio.subprocess.SubprocessStreamProtocol,
-        loop: AbstractEventLoop,
+        executable: str | None = None,
+        stdin: Pipeline = -1,
+        stdout: Pipeline = -1,
+        stderr: Pipeline = -1,
+        close_fds: bool = True,
+        cwd: str | None = None,
+        env: dict[str, str] | None = None,
+        errors: str | None = None,
+        startupinfo=None,
+        creationflags: int = 0,
+        restore_signals: bool = True,
+        start_new_session: bool = False,
+        pass_fds=(),
+        *,
+        user=None,
+        group=None,
+        extra_groups=None,
+        umask: int = -1,
+        pipesize: int = -1,
+        process_group=None,
+        output_limit: int = 0,
     ):
-        super().__init__(transport, protocol, loop)
+        self.reuse_args = PopenPosixTypedDict(
+            bufsize=0,
+            executable=executable,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+            close_fds=close_fds,
+            shell=True,
+            cwd=cwd,
+            env=env,
+            text=False,
+            encoding=None,
+            errors=errors,
+            startupinfo=startupinfo,
+            creationflags=creationflags,
+            restore_signals=restore_signals,
+            start_new_session=start_new_session,
+            pass_fds=pass_fds,
+            user=user,
+            group=group,
+            extra_groups=extra_groups,
+            umask=umask,
+            pipesize=pipesize,
+            process_group=process_group,
+        )  # type: ignore
 
-    async def display_info(self):
-        # TODO: logger should not display shell:display_info:46
-        # instead, display the caller's function
+        self.output_limit = output_limit or asyncio.streams._DEFAULT_LIMIT  # type: ignore
+        self._screen = Screen(max_lines=self.output_limit)
 
-        async for line in self.stdout:
-            logger.info(line.decode())
-
-    async def display_error(self):
-
-        async for line in self.stderr:
-            logger.error(line.decode())
-
-    async def display_output(self):
-        coros = list()
-        if self.stdout is not None:
-            coros.append(self.display_info())
-
-        if self.stderr is not None:
-            coros.append(self.display_error())
-
-        await asyncio.gather(*coros)
-
-    @classmethod
-    async def construct(
-        cls,
-        stream_limit: int = DEFAULT_STREAM_LIMIT,
-        stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        universal_newlines=False,
-        shell=True,
-        bufsize=0,
-        encoding=None,
-        errors=None,
-        text=None,
-        **popendict: Unpack[PopenPosixTypedDict],
-    ):
-        loop = get_event_loop()
-
+    async def execute(self, cmd: str, timeout: int = 60):
+        loop = asyncio.events.get_running_loop()
         protocol_factory = lambda: SubprocessStreamProtocol(
-            limit=stream_limit, loop=loop
+            limit=self.output_limit, loop=loop
+        )
+        protocol = protocol_factory()
+
+        transport = await loop._make_subprocess_transport(
+            protocol, cmd, **self.reuse_args
         )
 
-        # NOTE: cmd gets excuted in this line
-        transport, protocol = await loop.subprocess_shell(
-            protocol_factory,
-            cmd,
-            stdin=stdin,
-            stdout=stdout,
-            stderr=stderr,
-            shell=shell,
-            executable=executable,
-            **popendict,
-        )
+        stdout = asyncio.wait_for(self.read_stream(transport, protocol, 1), timeout)
+        stderr = asyncio.wait_for(self.read_stream(transport, protocol, 2), timeout)
 
-        proc = cls(transport=transport, protocol=protocol, loop=loop)
-        return proc
+        await asyncio.gather(stdout, stderr)
 
+        return ProcessResult(transport, str(self._screen))
 
-def shell_maker(
-    stdin=PIPE,
-    stdout=PIPE,
-    stderr=PIPE,
-    shell: bool = True,
-    executable=EXECUTABLE,
-    *,
-    timeout=None,
-    **kwargs: Unpack[PopenPosixTypedDict],
-):
-    limit = DEFAULT_STREAM_LIMIT
+    async def read_stream(
+        self,
+        transport: SubprocessTransport,
+        protocol: SubprocessStreamProtocol,
+        fd: Literal[1, 2],
+    ):
+        if fd == 1:
+            stream = protocol.stdout
+        elif fd == 2:
+            stream = protocol.stderr
+        else:
+            raise ValueError("fd has to be 1 or 2")
 
-    async def shell_maker(cmd, *, timeout=None):
-        loop = get_event_loop()
-        protocol_factory = lambda: SubprocessStreamProtocol(limit=limit, loop=loop)
+        if not stream:
+            return
 
-        # NOTE: cmd gets excuted in this line
-        transport, protocol = await loop.subprocess_shell(
-            protocol_factory,
-            cmd,
-            stdin=stdin,
-            stdout=stdout,
-            stderr=stderr,
-            shell=shell,
-            executable=executable,
-            **kwargs,
-        )
+        await self._screen.load(stream)
 
-        proc = StreamProcess(transport=transport, protocol=protocol, loop=loop)
-        return proc
+        pipe_tp = transport.get_pipe_transport(fd)
+        if not pipe_tp:
+            raise
+        pipe_tp.close()
 
-    return shell_maker
+    def update_args(self, **kwargs):
+        EXCLUDED_PARAMS = {"shell", "buffsize", "text", "encoding"}
+        keys = kwargs.keys()
+        if keys & EXCLUDED_PARAMS:
+            raise Exception("Invalid params")
+
+        self.reuse_args.update(kwargs)
 
 
-async def shell(cmd, **kwargs):
-    # TODO: shell maker seem to be too complicated
+class ProcessResult:
+    def __init__(self, transport, content: str):
+        self._transport = transport
+        self._content = content
 
-    # quick fixcc
+        self.returncode = transport.get_returncode()
 
-    executable = EXECUTABLE if Path("/usr/bin/zsh").exists() else None
-    kwargs["executable"] = executable
+    def __str__(self):
+        return f"ProcessResult<pid={self.pid}, returncode={self.returncode}>"
 
-    local_shell = shell_maker(**kwargs)
-    proc = await local_shell(cmd)
+    def __repr__(self):
+        return str(self)
 
-    # 0 means success else means failure, would return None before proc.wait
-    if proc.returncode:
-        print("return code: ", proc.returncode)
+    async def wait(self):
+        """Wait until the process exit and return the process return code."""
+        return await self._transport._wait()
 
-    # NOTE: this returns after process finishes execution
-    try:
-        await proc.display_output()
-        await proc.wait()
-    except Exception:
-        await proc.wait()
-    except KeyboardInterrupt:
-        proc.kill()
-        raise
+    def send_signal(self, signal):
+        self._transport.send_signal(signal)
 
-    # temp solution for proc.returncode could be None
-    return_code = proc.returncode or 1
-    return CompletedProcess(cmd, returncode=return_code, stdout="", stderr="")
+    def terminate(self):
+        self._transport.terminate()
+
+    def kill(self):
+        self._transport.kill()
+
+    @property
+    async def pid(self):
+        pid = self._transport.get_pid()
+        if not pid:
+            pid = await self._transport._wait()
+        return pid
+
+    @property
+    def content(self):
+        return self._content
 
 
 class Shell:
-    executeable: Path = Path("/usr/bin/zsh")
+    def __init__(
+        self,
+        loop: AbstractEventLoop,
+        process: PosixProcess,
+        executable: Path | None = None,
+    ):
+        self.loop = loop
+        self.process = process
+        self.executeable = executable
 
-    def run(self, cmd):
-        ...
-
-    @classmethod
-    async def construct(cls):
-        ...
+    async def __call__(self, command, *, timeout: int = 60):
+        return self.process.execute(command, timeout)
 
 
 class Zshell(Shell):
-    executable: Path = Path("/usr/bin/zsh")
+    def __init__(
+        self,
+        loop: AbstractEventLoop,
+        process: PosixProcess,
+        executable: Path = Path("usr/bin/zsh"),
+    ):
+        super().__init__(loop, process, executable)
+        self.process.update_args(executable=executable)
 
-    def __init__(self, loop: AbstractEventLoop, process: StreamProcess):
-        self.loop = loop
-        self.process = process
+
+def shell_factory():
+    loop = asyncio.get_event_loop()
+    process = PosixProcess()
+    return Zshell(loop, process)

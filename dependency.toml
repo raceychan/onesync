@@ -1,28 +1,44 @@
-[sys]
+[sys.base]
 dependency = [
-    "zsh", 
-    "curl", 
-    "ncdu", 
-    "git", 
-    "iproute2", 
+    "zsh",
+    "curl",
+    "ncdu",
+    "git",
+    "iproute2",
     "python3-pip",
-    "ripgrep", 
-    "tmux"
+    "ripgrep",
+    "tmux",
 ]
 
-[sys.python]
+[sys.enhanced]
 dependency = [
-    "euporie"
+    "httpie",
+    "exa",
+    "neovim",
+    "bat",
+    "btop",
+    "net-tools",
+    "fd",
+    "fzf",
+    "ranger",
+    "tree",
 ]
 
-[sys.python.jupyter]
+[sys.optional]
+dependency = ["gnupg", "jq", "pass", "pwgen", "rsync", "shellcheck", "unzip"]
+
+
+[python]
+dependency = ["euporie"]
+
+[python.jupyter]
 dependency = [
-    "jupyter", 
-    "jupyterlab", 
-    "jupyterlab_code_formatter", 
-    "black" , 
-    "isort", 
-    "nb_conda_kernels", 
-    "jupyterlab-lsp", 
-    "python-lsp-server", 
+    "jupyter",
+    "jupyterlab",
+    "jupyterlab_code_formatter",
+    "black",
+    "isort",
+    "nb_conda_kernels",
+    "jupyterlab-lsp",
+    "python-lsp-server",
 ]

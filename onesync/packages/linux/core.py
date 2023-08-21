@@ -1,6 +1,7 @@
 # from base import load_toml
-from onesync.installer import apt_install
 from onesync.base import Package
+from onesync.config import read_dependency
+from onesync.installer import apt_install
 
 
 def make_package(name):
@@ -8,30 +9,11 @@ def make_package(name):
 
 
 # TODO: read from dependency.toml
-apt_pkgs = ["zsh", "curl", "ncdu", "git", "iproute2", "python3-pip", "ripgrep", "tmux"]
+apt_pkgs = read_dependency("sys.base")
 
-apt_enhanced_pkgs = [
-    "httpie",
-    "exa",
-    "neovim",
-    "bat",
-    "btop",
-    "net-tools",
-    "fd",
-    "fzf",
-    "ranger",
-    "tree",
-]
+apt_enhanced_pkgs = read_dependency("sys.enhanced")
 
-apt_packages_optional = [
-    "gnupg",
-    "jq",
-    "pass",
-    "pwgen",
-    "rsync",
-    "shellcheck",
-    "unzip",
-]
+apt_packages_optional = read_dependency("sys.optional")
 
 # NOTE: some of these packages needs extra care
 # e.g: exa can't be installed natively in Ubuntu 20

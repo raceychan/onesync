@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from typer import Typer as Cli, Argument, Option
 from typing import Annotated
 from onesync.importer import import_package, import_configurable
@@ -6,9 +7,6 @@ from onesync.tui.tui import OneSync
 
 cli = Cli()
 tui = OneSync()
-
-
-import sys
 
 
 @cli.command(no_args_is_help=True)
@@ -30,9 +28,8 @@ def install(
     asyncio.run(mod.install())
 
     """
-    shell = make_shell() / await make_async_shell
-    shell.run(cmd)
-    shell.instsall(mod)
+    shell = Shell(package_tool=APT())
+    await shell.install(mod)
     """
 
 
@@ -46,7 +43,6 @@ def sync(mod_name: str, package=None):
     mod = import_configurable(mod_name, package)
     # BUG: any module can be imported, instead of configurable ones only
     asyncio.run(mod.sync_conf())
-
 
 
 if __name__ == "__main__":

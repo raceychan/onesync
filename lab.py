@@ -15,30 +15,8 @@ class APT(PackgeTool):
 
 # apt = APT(shell)
 # apt.install("zsh==1.3.1")
-# class LinuxDistrio:
-#     package_tool: "APT"
 
 
-# class Ubuntu(LinuxDistrio):
-#     package_tool: "APT"
-
-
-class Platform:
-    ...
-
-
-class Unix(Platform):
-    distrio: ...
-
-    async def install(self, package):
-        ...
-
-
-# shell = make_shell() # UnixShell(Ubuntu)
-#
-# async with shell.stream() as sh:
-#     await sh.cmd("ls")
-#     await sh.cmd("mkdir sth")
 from loguru import logger
 
 

@@ -6,7 +6,6 @@ from onesync.gitools import git_clone
 from onesync.config import SettingBase
 
 
-
 # NOTE: since this is a configurable package, we should make this a Configurable class
 async def enable_copy():
     await shell("sudo apt install xsel")
@@ -62,7 +61,6 @@ class LazyVim(NeoVim):
             Command("mv ~/.local/state/nvim ~/.local/state/nvim.bak"),
             Command("mv ~/.cache/nvim ~/.cache/nvim.bak"),
         ]
-
 
         for cmd in cmds:
             await shell(str(cmd))

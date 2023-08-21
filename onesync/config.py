@@ -1,3 +1,4 @@
+import tomllib
 from pathlib import Path
 
 
@@ -5,6 +6,7 @@ class SettingBase:
     # below should be resolved from env
     ONEDRIVE_ROOT: Path = Path("/mnt/d/OneDrive")
     ONEDRIVE_CONFIG: Path = ONEDRIVE_ROOT / "Config/linux/dotfiles"
+
 
 class ZSH(SettingBase):
     CONFIG_PATH: Path = Path().home() / ".zshrc"
@@ -15,6 +17,14 @@ class Settings(SettingBase):
     ACCEPTED_YES: list[str] = ["y", "yes", "Y", "YES"]
 
     zsh: "ZSH" = ZSH()
+
+
+def read_dependency(label: str):
+    with Path("dependency.toml").open("rb") as f:
+        data = tomllib.load(f)
+    for l in label.split("."):
+        data = data.get(l, {})
+    return data.get("dependency")
 
 
 settings = Settings

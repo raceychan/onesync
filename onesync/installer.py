@@ -45,10 +45,6 @@ class PackageTool:
         pass
 
     # Add other package tool methods here
-
-
-
-
     # Implement other APT-specific methods here
 
 
@@ -87,10 +83,9 @@ class Ubuntu(Linux):
 
 
 class APT(PackageTool):
-    prefix: str = "apt-get"
-
-    def __init__(self, root: bool=True):
+    def __init__(self, root: bool = True):
         self.root = root
+        self.prefix = "apt-get"
 
     def run_as_root(self, cmd: str):
         return f"sudo {cmd}" if self.root else cmd

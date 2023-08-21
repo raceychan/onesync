@@ -88,6 +88,7 @@ async def get_sys_number() -> str | None:
 
 # provides a convenient way to combine commands, aim to replace multiple shell(command) call
 
+
 class PackageMeta(type):
     def __new__(meta: Type["PackageMeta"], cls_name: str, bases, namespaces: dict, configrable: bool, **kwargs):  # type: ignore
         cls = super().__new__(meta, cls_name, bases, namespaces, **kwargs)
@@ -102,8 +103,6 @@ class Package(ABC):
     version: str = "latest"
     dependencies: list = field(default_factory=list)
     platform: str = "linux"
-
-
 
     @classmethod
     def from_settings(cls: Type["Package"], settings: SettingBase):
