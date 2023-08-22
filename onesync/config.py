@@ -1,4 +1,5 @@
 import tomllib
+import yaml
 from pathlib import Path
 
 
@@ -25,6 +26,12 @@ def read_dependency(label: str):
     for l in label.split("."):
         data = data.get(l, {})
     return data.get("dependency")
+
+
+def safe_load(file: str = "onesync.yaml"):
+    with Path(file).open() as f:
+        data = yaml.safe_load(f)
+    return data
 
 
 settings = Settings

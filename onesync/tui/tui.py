@@ -12,7 +12,7 @@ Make a tui for onesync
 
 class ModuleView(Static):
     def compose(self) -> ComposeResult:
-        pkgs = Path("packages")
+        pkgs = Path("onesync/packages")
         mods = get_submodules(pkgs)
         items = (ListItem(Label(as_importable(module.name))) for module in mods)
         yield ListView(*items)

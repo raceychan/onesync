@@ -1,5 +1,7 @@
+from pathlib import Path
+
 from onesync.base import shell
-from onesync.config import settings
+from onesync.config import settings, safe_load
 
 
 def continue_after_fail():
@@ -98,3 +100,9 @@ class APT(PackageTool):
 
     def remove(self, package):
         return self.run_as_root(f"{self.prefix} remove {package}")
+
+
+def load_installation(module: str, file: str = "onesync.yaml"):
+    data = safe_load(file)
+    installation = data.get(module, {}).get("install", None)
+    return installation

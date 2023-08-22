@@ -1,6 +1,5 @@
 import shutil
 from pathlib import Path
-from subprocess import PIPE, CalledProcessError, CompletedProcess, run
 from typing import Type
 from abc import ABC, abstractmethod
 from functools import cached_property
@@ -13,7 +12,8 @@ from onesync.config import SettingBase
 from onesync.dirhash import md5sum
 from onesync.shell import shell
 
-# TODO: use onesync.toml to parse
+# TODO: use dependency.toml to parse depencies and define meta data
+# TODO: use yaml to define instructions
 
 ProjectRoot = Path.cwd()
 
@@ -79,8 +79,8 @@ def copy(
 
 async def get_sys_number() -> str | None:
     res = await shell("lsb_release -a 2>/dev/null | grep 'Release:' | awk '{print $2}'")
-    if res and res.stdout:
-        sys_num = res.stdout.strip()
+    if res and res.content:
+        sys_num = res.content.strip()
     else:
         sys_num = None
     return sys_num

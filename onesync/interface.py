@@ -15,7 +15,18 @@ stdin, stdin_w = socket.socketpair()
 Pipeline = Literal[1, 2, -1, None]
 
 
-class PopenTypedDict(TypedDict):
+class AsyncioPopen(TypedDict):
+    executable: str | None
+    stdin: Pipeline
+    stdout: Pipeline
+    stderr: Pipeline
+    close_fds: bool
+    cwd: str | None
+    env: dict[str, str] | None
+    errors: str | None
+
+
+class PopenTypedDict(AsyncioPopen):
     """
     args: A string, or a sequence of program arguments.
 
@@ -67,18 +78,10 @@ class PopenTypedDict(TypedDict):
 
     args: str | list
     bufsize: int
-    executable: str | None
-    stdin: Pipeline
-    stdout: Pipeline
-    stderr: Pipeline
-    close_fds: bool
     shell: bool
-    cwd: str | None
-    env: dict[str, str] | None
     text: bool
     universal_newlines: bool
     encoding: str | None
-    errors: str | None
 
 
 class PopoenWindowsTypedDict(PopenTypedDict):

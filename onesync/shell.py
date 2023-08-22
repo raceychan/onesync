@@ -6,12 +6,10 @@ from pathlib import Path
 
 from asyncio.events import get_running_loop, AbstractEventLoop
 from asyncio.unix_events import _UnixSelectorEventLoop
-from asyncio.transports import SubprocessTransport
 from asyncio.subprocess import SubprocessStreamProtocol
-
+from asyncio.base_subprocess import BaseSubprocessTransport
 
 from typing import Iterable, AsyncIterable, Literal
-
 
 from onesync.interface import Pipeline, PopenPosixTypedDict
 
@@ -23,17 +21,27 @@ DEFAULT_STREAM_LIMIT: int = asyncio.streams._DEFAULT_LIMIT  # type: ignore
 # subprocess.run(['ls'], stderr=sys.stderr, stdout=sys.stdout)
 
 
-class Command(str):
-    # default to linux
-    def __new__(cls, string):
-        return super().__new__(cls, string.strip())
+def sync_shell(
+    cmd,
+    stdout=None,
+    stderr=None,
+):
+    import subprocess
 
-    def __repr__(self):
-        return f"Command('{self}')"
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=1)
+    return process
 
-    def andif(self, other):
-        new = self + " && " + other
-        return Command(new)
+
+def get_unix_running_loop() -> _UnixSelectorEventLoop:
+    loop = get_running_loop()
+    return loop  # type: ignore
+
+
+class _UnsetParams:
+    ...
+
+
+UnsetParams = _UnsetParams()
 
 
 class CommandGroup:
@@ -74,26 +82,89 @@ class CommandGroup:
         return " && ".join(self)
 
 
-# TODO: auto split multiple lines into multiple shells
+class Command(str):
+    # default to linux
+    def __new__(cls, string):
+        if string.__class__ is cls:
+            return string
+        return super().__new__(cls, string.strip())
+
+    def __repr__(self):
+        return f"Command('{self}')"
+
+    def andif(self, other):
+        new = self + " && " + other
+        return Command(new)
 
 
-def get_unix_running_loop() -> _UnixSelectorEventLoop:
-    loop = get_running_loop()
-    return loop  # type: ignore
+class CommandNode:
+    def __init__(
+        self,
+        cmd: str,
+        prev: "CommandNode | None" = None,
+        next: "CommandNode | None" = None,
+    ):
+        self.cmd = Command(cmd)
+        self.prev = prev
+        self.next = next
+
+    def __repr__(self):
+        return f"CommandNode('{self.cmd}')"
 
 
-class _UnsetParams:
-    ...
+class CommandChain:
+    def __init__(self, head: CommandNode | None = None):
+        self.head = head
+        self.tail = head.next if head else None
+        self._last_executed = None
 
+    def insert(self, cmd: Command | str):
+        node = CommandNode(cmd)
 
-UnsetParams = _UnsetParams()
+        if not self.head:
+            self.head = node
+            return
+
+        self.head.prev, node.next = node, self.head
+
+    def append(self, cmd: Command | str):
+        node = CommandNode(cmd)
+
+        if not self.head:
+            self.head = node
+            return
+
+        cursor = self.head
+        while cursor.next:
+            cursor = cursor.next
+
+        cursor.next, node.prev = node, cursor
+
+    @classmethod
+    def from_list(cls, cmd_list: list[str]):
+        chain = cls()
+
+        if (size := len(cmd_list)) < 3:
+            for cmd in cmd_list:
+                chain.append(cmd)
+            return chain
+
+        ptr = 0
+        while ptr < size - 1:
+            cur, next = CommandNode(cmd_list[ptr]), CommandNode(cmd_list[ptr + 1])
+            if not chain.head:
+                chain.head = cur
+            cur.next, next.prev = next, cur
+            ptr += 1
+
+        return chain
 
 
 class Screen:
     def __init__(self, max_lines: int = 2**16, text: bool = False):
         self._queue = collections.deque(maxlen=max_lines)
         self._text = text
-        self._cursor = 0
+        self._line_cursor = 0
 
     async def load(self, lines: Iterable | AsyncIterable):
         match lines:
@@ -121,10 +192,10 @@ class Screen:
 
     def __next__(self):
         try:
-            data = self._queue[self._cursor]
+            data = self._queue[self._line_cursor]
         except IndexError:
             raise StopIteration
-        self._cursor += 1
+        self._line_cursor += 1
         return data
 
 
@@ -191,7 +262,7 @@ class PosixProcess:
 
         transport = await loop._make_subprocess_transport(
             protocol, cmd, **self.reuse_args
-        )
+        )  # type: ignore
 
         stdout = asyncio.wait_for(self.read_stream(transport, protocol, 1), timeout)
         stderr = asyncio.wait_for(self.read_stream(transport, protocol, 2), timeout)
@@ -202,7 +273,7 @@ class PosixProcess:
 
     async def read_stream(
         self,
-        transport: SubprocessTransport,
+        transport: BaseSubprocessTransport,
         protocol: SubprocessStreamProtocol,
         fd: Literal[1, 2],
     ):
@@ -221,23 +292,28 @@ class PosixProcess:
         pipe_tp = transport.get_pipe_transport(fd)
         if not pipe_tp:
             raise
+
         pipe_tp.close()
 
     def update_args(self, **kwargs):
         EXCLUDED_PARAMS = {"shell", "buffsize", "text", "encoding"}
         keys = kwargs.keys()
-        if keys & EXCLUDED_PARAMS:
-            raise Exception("Invalid params")
 
-        self.reuse_args.update(kwargs)
+        if fixed_params := (keys & EXCLUDED_PARAMS):
+            raise Exception(f"Fixed params {fixed_params}")
+
+        if invalid_params := (keys - PopenPosixTypedDict.__annotations__.keys()):
+            raise Exception(f"Invalid params {invalid_params}")
+
+        self.reuse_args.update(kwargs)  # type: ignore
 
 
 class ProcessResult:
-    def __init__(self, transport, content: str):
+    def __init__(self, transport: BaseSubprocessTransport, content: str):
         self._transport = transport
         self._content = content
-
         self.returncode = transport.get_returncode()
+        self._pid = -1
 
     def __str__(self):
         return f"ProcessResult<pid={self.pid}, returncode={self.returncode}>"
@@ -259,11 +335,10 @@ class ProcessResult:
         self._transport.kill()
 
     @property
-    async def pid(self):
-        pid = self._transport.get_pid()
-        if not pid:
-            pid = await self._transport._wait()
-        return pid
+    def pid(self):
+        if not self._pid:
+            self._pid = self._transport.get_pid()
+        return self._pid
 
     @property
     def content(self):
@@ -282,7 +357,7 @@ class Shell:
         self.executeable = executable
 
     async def __call__(self, command, *, timeout: int = 60):
-        return self.process.execute(command, timeout)
+        return await self.process.execute(command, timeout)
 
 
 class Zshell(Shell):
@@ -290,13 +365,16 @@ class Zshell(Shell):
         self,
         loop: AbstractEventLoop,
         process: PosixProcess,
-        executable: Path = Path("usr/bin/zsh"),
+        executable: Path = Path("/usr/bin/zsh"),
     ):
         super().__init__(loop, process, executable)
         self.process.update_args(executable=executable)
 
 
-def shell_factory():
+def shell_factory(**kwargs) -> Shell:
     loop = asyncio.get_event_loop()
-    process = PosixProcess()
+    process = PosixProcess(**kwargs)
     return Zshell(loop, process)
+
+
+shell = shell_factory()
