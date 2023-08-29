@@ -88,7 +88,6 @@ def shell_sink(message: Message):
     print(json_record)
 
 
-
 preconfig_logger.remove(0)
 
 preconfig_logger.add(

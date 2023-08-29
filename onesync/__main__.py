@@ -5,10 +5,18 @@ from typing import Annotated
 from onesync import service
 
 
-from onesync.tui.tui import OneSync
-
 cli = Cli()
-tui = OneSync()
+
+TEXTUAL_INSTALLED = True
+
+try:
+    import textual
+except ModuleNotFoundError:
+    TEXTUAL_INSTALLED = False
+else:
+    from onesync.tui.app import OneSync
+
+    tui = OneSync()
 
 
 @cli.command(no_args_is_help=True)
@@ -23,7 +31,8 @@ def install(
     --------
     ...
     """
-    asyncio.run(service.install(mod_name, None))
+
+    asyncio.run(service.install(mod_name))
 
 
 @cli.command(no_args_is_help=True)
@@ -41,11 +50,16 @@ def sync(
     ...
     """
 
-    asyncio.run(service.sync(mod_name, None))
+    asyncio.run(service.sync(mod_name))
 
 
 def main():
-    tui.run() if len((args := sys.argv)) <= 1 else cli()
+    args = sys.argv
+    if len(args) == 1:
+        if TEXTUAL_INSTALLED:
+            tui.run()  # type: ignore
+    else:
+        cli()
 
 
 if __name__ == "__main__":

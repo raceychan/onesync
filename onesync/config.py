@@ -34,4 +34,4 @@ def safe_load(file: str = "onesync.yaml"):
     return data
 
 
-settings = Settings
+settings = Settings()

@@ -1,20 +1,12 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Static, ListItem, ListView, Label
 
-from pathlib import Path
-from onesync.importer import get_submodules, as_importable
-
-
-"""
-Make a tui for onesync
-"""
+from onesync import service
 
 
 class ModuleView(Static):
     def compose(self) -> ComposeResult:
-        pkgs = Path("onesync/packages")
-        mods = get_submodules(pkgs)
-        items = (ListItem(Label(as_importable(module.name))) for module in mods)
+        items = (ListItem(Label(mod)) for mod in service.list_modules())
         yield ListView(*items)
 
 
@@ -36,6 +28,10 @@ class OneSync(App):
         """
         install the intended app
         """
+        ...
+
+    def action_sync(self) -> None:
+        ...
 
 
 if __name__ == "__main__":

@@ -124,7 +124,7 @@ def get_configurable(mod_name: str) -> Type[Configurable]:
     return cfg_clz  # type: ignore
 
 
-def import_package(mod_name: str, package) -> Package | ModuleType:
+def import_package(mod_name: str, package: str | None) -> Package | ModuleType:
     mod = ez_import(mod_name, package)
     if pkg_clz := get_package(mod.__name__):
         if issubclass(pkg_clz, Configurable):

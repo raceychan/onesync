@@ -12,9 +12,6 @@ from onesync.config import SettingBase
 from onesync.dirhash import md5sum
 from onesync.shell import shell
 
-# TODO: use dependency.toml to parse depencies and define meta data
-# TODO: use yaml to define instructions
-
 ProjectRoot = Path.cwd()
 
 StrPath = str | Path
@@ -84,9 +81,6 @@ async def get_sys_number() -> str | None:
     else:
         sys_num = None
     return sys_num
-
-
-# provides a convenient way to combine commands, aim to replace multiple shell(command) call
 
 
 class PackageMeta(type):
@@ -227,21 +221,12 @@ class Configurable(Package):
         local_mtime = self.config_path.stat().st_mtime
         remote_mtime = remote_conf.stat().st_mtime
 
-        # BUG: when config_path is a dir, Path.stat() would be incorrect
-        if local_mtime == remote_mtime:
-            # monitor_race_condition(self.config_path, remote_conf)
-            logger.warning("Remote and Local modify time is the same, Not action taken")
-            return
-
         # TODO: rewrite diff function for update_file, update_dir
 
-        else:
-            # TODO: implement file conflict algorithm
-            if self.config_path.is_dir():
-                # NOTE: when config path is a dir, calculate filehash of each file in it,
-                # update only those changed,
-                # self.config_path.iterdir()...
-                pass  # save it for later
+        if local_mtime != remote_mtime:
+            # TODO:
+            # 1.implement file conflict algorithm
+            # 2.detect file hash
 
             if local_mtime > remote_mtime:
                 logger.info(
@@ -263,3 +248,23 @@ class Configurable(Package):
 
                 # replace local conf with remote conf
                 copy(remote_conf, self.config_path)
+        else:
+            if not self.config_path.is_dir():
+                # monitor_race_condition(self.config_path, remote_conf)
+                logger.warning("Nothing changed, No action taken")
+                return
+
+            for file in self.config_path.iterdir():
+                ...
+
+            # BUG: when config_path is a dir, Path.stat() would be incorrect
+            # since the last modifications time of a folder changes only when a new file or folder added
+            # so the logic here should be
+            # 1. check if time unequal, if so, update
+            # 2. if time equal, check if config path is a folder, if so, check if any file is changed.
+            #
+            # TODO: when config path is a dir, calculate filehash of each file in it,
+            # update only those changed,
+            # self.config_path.iterdir()...
+            ...
+            breakpoint()

@@ -21,6 +21,10 @@ DEFAULT_STREAM_LIMIT: int = asyncio.streams._DEFAULT_LIMIT  # type: ignore
 # subprocess.run(['ls'], stderr=sys.stderr, stdout=sys.stdout)
 
 
+def stream_protocol(output_limit, loop):
+    return SubprocessStreamProtocol(limit=output_limit, loop=loop)
+
+
 def sync_shell(
     cmd,
     stdout=None,
@@ -255,10 +259,7 @@ class PosixProcess:
 
     async def execute(self, cmd: str, timeout: int = 60):
         loop = asyncio.events.get_running_loop()
-        protocol_factory = lambda: SubprocessStreamProtocol(
-            limit=self.output_limit, loop=loop
-        )
-        protocol = protocol_factory()
+        protocol = SubprocessStreamProtocol(self.output_limit, loop)
 
         transport = await loop._make_subprocess_transport(
             protocol, cmd, **self.reuse_args
@@ -359,6 +360,9 @@ class Shell:
     async def __call__(self, command, *, timeout: int = 60):
         return await self.process.execute(command, timeout)
 
+    async def install(self, mod):
+        raise NotImplementedError
+
 
 class Zshell(Shell):
     def __init__(
@@ -369,6 +373,9 @@ class Zshell(Shell):
     ):
         super().__init__(loop, process, executable)
         self.process.update_args(executable=executable)
+
+    async def install(self, mod):
+        return await mod.install(shell=self)
 
 
 def shell_factory(**kwargs) -> Shell:
