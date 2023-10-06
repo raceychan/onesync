@@ -16,7 +16,6 @@ def list_modules(module_path: str | Path = "onesync/packages"):
 
 
 async def install(mod_name: str):
-    breakpoint()
     mod = import_package(mod_name, None)
 
     # apt = APT(shell=shell, mod=mod)
